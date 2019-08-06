@@ -15,22 +15,23 @@ class TXTCRcalc:
 		ss.nbr = calc.getnbr(calc.parentheses(replace_variables(ss.num, recup_variables(ss._variables), ss._remplacement)))[0]
 
 class TXTCRfonc:
-	def __init__(ss, fonc, variables):
+	def __init__(ss, fonc, variables, remplacement):
+		ss._remplacement = remplacement
 		ss._variables = variables
 		ss.fonc = fonc
 	def __eq__(ss, fonc): return str(ss) == str(fonc)
 	def __ne__(ss, fonc): return not str(ss) == str(fonc)
 	def __call__(ss, *cle, **ops): return ss.verif(*cle, **ops)
 	def verif(ss, *cle, **ops):
-		fonc = ss.fonc
 		variables = recup_variables(ss._variables)
 		for c,v in ops.items(): variables[c] = v
-		return  DefCondition(fonc, variables).analyse()
+		fonc = replace_variables(ss.fonc, variables, ss._remplacement)
+		return DefCondition(fonc, variables).analyse()
 
 class TXTCRstr(str):
 	def __init__(ss, text):
-		ss._text = text
+		ss.text = text
 	def __str__(ss): return ss.verif()
-	def __repr__(ss): return ss._text
+	def __repr__(ss): return ss.text
 	def verif(ss):
-		return replace_variables(ss._text, recup_variables(ss._variables), ss._remplacement)
+		return replace_variables(ss.text, recup_variables(ss._variables), ss._remplacement)

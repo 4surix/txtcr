@@ -49,6 +49,10 @@ expregu2 = [('\t', '\\t'),
 			('\r', '\\r'),
 			('\s', '\\s')]
 
+def base_to_dict(decodage, txt_base):
+	print(decodage, txt_base)
+	return {c:ss.decodage(v, 0) for c,v in [p.split('= ') for p in txt_base.split('; ') if p]}
+
 def istype(ttype, valeur=None, *, vtype=False):
 	if not vtype: vtype = type(valeur).__name__
 	if vtype in ttype:
@@ -107,7 +111,7 @@ def is_class(valeur):
 		if '__module__' in valeur.__class__.__dict__:
 			return True
 
-def verif_contenue(texte, variables=[], remplacements={}, decode=False, addsep=True, isformat2=True):
+def verif_contenue(texte, variables=[], remplacements={}, *, decode=False, addsep=True, isformat2=True, istexte=True):
 
 	texte = str(texte)
 
@@ -126,7 +130,7 @@ def verif_contenue(texte, variables=[], remplacements={}, decode=False, addsep=T
 		if decode and remplacement in texte: texte = texte.replace(remplacement, param)
 		elif not decode and param in texte: texte = texte.replace(param, remplacement)
 
-	if '#' in texte:
+	if istexte and '#' in texte:
 		texte = TXTCRstr(texte)
 		texte._variables = variables
 		texte._remplacement = remplacements

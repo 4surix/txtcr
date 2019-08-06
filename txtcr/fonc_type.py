@@ -1,3 +1,4 @@
+
 def recup_variables(_variables):
 	variables = {}
 	def decompose(d):
@@ -10,7 +11,7 @@ def recup_variables(_variables):
 
 def recup_num(num, variable):
 	if num != '#':
-		if num[:1] in '-0123456789':
+		if num[:1] in '-+0123456789':
 			variable = variable[int(num)]
 		num = '|%s'%num
 	else: num = ''
@@ -23,8 +24,8 @@ def replace_variables(texte, variables, remplacement):
 		for morceau in texte.split('#'):
 			num = '#'
 
-			if '||' in morceau:
-				morceau, num = morceau.split('||')
+			if '|' in morceau:
+				morceau, num = morceau.split('|')
 
 			variable = variables.get(morceau, '#')
 			if variable != '#':
@@ -102,7 +103,7 @@ class Calcul:
 		n1, n2 = _split(equ, symb)
 		n1, n2 = ss.getnbr(n1, True), ss.getnbr(n2)
 		expr = n1[1]+symb+n2[1]
-		if symb == '^' and n2[0] > 1000: raise Exception('Exposant not < 1000')
+		if symb == '^' and n2[0] > 1000: raise Exception('Exposant not > 1000')
 		
 		return equ.replace(expr, str(eval(expr)))
 
@@ -138,7 +139,7 @@ class DefCondition:
 		p = str(p)
 		b = p[0]
 
-		if '#' == b: 
+		if b == '#': 
 			return ss.variables.get(p[1:-1])
 		elif b in 'Noø':
 			return None

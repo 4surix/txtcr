@@ -15,6 +15,8 @@ def separer(texte):
 	symb_croiser = 0
 	enregistrement = 0
 
+	types_simplifiables = ['"', "'", "+", "-", "0", "1"]
+
 	for nbr, carac in enumerate(texte+'-'):
 
 		if enregistrement:
@@ -28,19 +30,11 @@ def separer(texte):
 			meme_type = False
 			enregistrement = 0
 
-		if sep in ['"', "'"]:
+		if sep in types_simplifiables:
 			if carac == '|':
-				sep += '|'
-				continue
-			else: 
-				in_texte = True
-				sep = ''
-
-		elif sep[-1:] in ['|']:
-			if carac == ' ':
 				meme_type = sep[0]
 				continue
-			else:
+			else: 
 				in_texte = True
 			sep = ''
 
@@ -48,7 +42,7 @@ def separer(texte):
 			echapement = True
 			continue
 
-		elif carac in ['"', "'"]:
+		elif carac in types_simplifiables:
 			sep = carac
 			continue
 
@@ -105,7 +99,6 @@ def separer_dict_format2(texte, _):
 
 		echapement = False
 
-
 def separer_dict_format1(texte, sep):
 	return texte.split(sep)
 
@@ -152,7 +145,7 @@ class Decoder:
 		elif balise == "[":
 			desc = []
 
-			virg, symb, texte = isparam('| ', texte, virg)
+			virg, symb, texte = isparam('|', texte, virg)
 
 			if ss.isformat2:
 				values = separer(texte[:-1])
@@ -166,7 +159,7 @@ class Decoder:
 		elif balise == "(":
 			desc = ()
 
-			virg, symb, texte = isparam('| ', texte, virg)
+			virg, symb, texte = isparam('|', texte, virg)
 
 			if ss.isformat2:
 				values = separer(texte[:-1])
@@ -190,13 +183,16 @@ class Decoder:
 			desc = True
 
 		elif balise == '>':
-			desc = typefonc(texte, ss.variables, ss.remplacement)
+			desc = TXTCRfonc(texte, ss.variables, ss.remplacement)
 
 		elif balise == '#':
-			desc = ss.decode(texte[3:], nbr, variables=ss.variables, remplacement=ss.remplacement)
+			data = texte[3:]
+			if ss.isformat2:
+				data = verif_contenue(data, decode=True, isformat2=ss.isformat2, istexte=False)
+			desc = ss.decode(data, nbr, variables=ss.variables, remplacement=ss.remplacement)
 
 		elif balise == '=':
-			desc = typecalc(texte, ss.variables, ss.remplacement)
+			desc = TXTCRcalc(texte, ss.variables, ss.remplacement)
 
 		elif balise in ['+','-']:
 			texte = balise+texte
@@ -241,8 +237,6 @@ class Decodage(Decoder):
 					valeur.__class__.__TXTCRvars__.append(ss.__dict__)
 				ss.__dict__[item] = valeur
 
-			#def __getattr__(ss, item): return ss.__dict__[item]
-
 			def get(ss, balise, param=None, *, defaut=None):
 				css = ss.__class__
 
@@ -253,7 +247,7 @@ class Decodage(Decoder):
 					('H', 'hash')	: css.__TXTCRhash__,
 					('E', 'encd')	: css.__TXTCRencd__,
 					('I', 'info')	: (ss.__dict__.get(param, defaut) if param else {c:v for c,v in ss.__dict__.items()}),
-					('B', 'base')	: ({c:ss.__decodage__(v, 0) for c,v in [p.split('= ') for p in css.__TXTCRbase__.split('; ') if p]}.get(param, defaut) if param else css.__TXTCRbase__),
+					('B', 'base')	: (base_to_dict(ss.__decodage__, css.__TXTCRbase__).get(param, defaut) if param else css.__TXTCRbase__),
 				}.items() if balise in c] + [False])[0]
 
 				if valeur is None:
@@ -317,7 +311,7 @@ class Decodage(Decoder):
 					elif param == 'H':
 						modif(ss.__class__.__TXTCRhash__, data)
 					elif param == 'B':
-						info = {c:ss.__decodage__(v, 0) for c,v in [p.split('= ') for p in ss.__class__.__TXTCRbase__.split('; ') if p]}
+						info = base_to_dict(ss.__decodage__, ss.__class__.__TXTCRbase__)
 						modifdict(info, data)
 						ss.__class__.__TXTCRbase__ = '; '.join(['%s= %s'%(c, ss.__encode__(v, 0)) for c,v in info.items()])
 					elif param == 'I':
@@ -337,7 +331,7 @@ class Decodage(Decoder):
 			def __repr__(ss):
 				clss = ss.__class__
 				if not ss.__TXTCRrepr__:
-					return '<Not __repr__>'
+					return '<Not R#>'
 				return str(ss.__TXTCRrepr__).format(
 						N=clss.__name__,
 						D=clss.__doc__,
@@ -348,10 +342,10 @@ class Decodage(Decoder):
 											)
 
 		remplacement = params.get('base', '')
-		ss.remplacement.append({c:ss.decoder(v, 0) for c,v in [p.split('= ') for p in remplacement.split('; ') if p]})
+		ss.remplacement.append(base_to_dict(ss.decoder, remplacement))
 
 		newclass = Class()
-		newclass.__class__.__name__				= params.get('name', 'None')
+		newclass.__class__.__name__				= params.get('name', '')
 		newclass.__class__.__doc__				= params.get('desc')
 		newclass.__class__.__TXTCRdate__		= params.get('date')
 		newclass.__class__.__TXTCRencd__		= params.get('encd')
@@ -396,7 +390,7 @@ def _decode(datas=None, fichier=None, liste=False, **ops):
 	txtcr_format = datas[:3]
 	if txtcr_format == ';0#':
 		isformat2 = False
-	elif txtcr_format == ';|#':
+	elif txtcr_format == '|;#':
 		isformat2 = True
 	else:
 		raise erreurs.FormatInconnue(txtcr_format)
@@ -408,4 +402,4 @@ def _decode(datas=None, fichier=None, liste=False, **ops):
 		txtcrs.append(decode.decode(data, **ops))
 		decode = None
 
-	return (txtcrs[0] if len(txtcrs) == 1 and not liste else tuple(txtcrs))
+	return (txtcrs[0] if len(txtcrs) == 1 and not liste else txtcrs)

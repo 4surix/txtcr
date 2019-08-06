@@ -13,36 +13,30 @@ def tmp(clss, values, *, silent=False):
 
 	if isinstance(values, dict):
 		for item, value in values.item():
-			if not silent and item not in tmps:
+			if item not in tmps:
 				if item not in vals:
 					setattr(clss, item, value)
 				tmps.append(item)
-			else: raise Exception('%s est déjà une valeur temporaire !'%item)
+			elif not silent: raise Exception('%s est déjà une valeur temporaire !'%item)
 
 	elif isinstance(values, list):
 		for item in values:
-			if not silent and item not in tmps:
+			if item not in tmps:
 				if item in vals:
 					tmps.append(item)
-				else: raise Exception("%s n'existe pas !"%item)
-			else: raise Exception('%s est déjà une valeur temporaire !'%item)
+				elif not silent: raise Exception("%s n'existe pas !"%item)
+			elif not silent: raise Exception('%s est déjà une valeur temporaire !'%item)
 
-def rmtmp(clss, cle):
+def rmtmp(clss, cle, *, silent=False):
 	tmps = clss.__class__.__TXTCRtmps__
 	for item in cle:
 		if item in tmps:
 			tmps.remove(item)
-		else: raise Exception("%s n'est pas une valeur temporaire !"%item)
+		elif not silent: raise Exception("%s n'est pas une valeur temporaire !"%item)
 
 class fichier:
 	def __init__(ss, *cle, **ops):
 		ss.params(*cle,  **ops)
-
-	def __call__(ss, fichier, **ops):
-		ss.params(fichier, 'r', **ops)
-		data = ss.ouverture()
-		ss.file.close()
-		return data
 
 	def __enter__(ss):
 		return ss.ouverture()
@@ -69,6 +63,6 @@ class fichier:
 			_encode(ss.txtcr, isformat2=ss.ops.get('isformat2', True))
 			if ss.mode != 'n':
 				ss.file.close()
-				ss.file = open(ss.fichier, 'w', encoding=ss.txtcr.get('encoding', 'utf-8'))
+				ss.file = open(ss.fichier, 'w', encoding=ss.txtcr.get('encd', 'utf-8'))
 			_encode(ss.txtcr, fichier=ss.file, isformat2=ss.ops.get('isformat2', True))
 		ss.file.close()
