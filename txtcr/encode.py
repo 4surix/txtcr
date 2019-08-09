@@ -1,224 +1,157 @@
 from .utile import *
 from . import erreurs
 
-class Encoder:
+class Encode:
 
 	def __init__(ss, isformat2, isindent=False):
 		ss.isindent = isindent
 		ss.isformat2 = isformat2
 
-	def encoder(ss, valeur, nbr, getsymb=0):
+	def __call__(ss, *cle):
+		return ss.encode(*cle)
 
-		nbr += 1
+	def encode(ss, valeur, profondeur=-1, getsymb=0):
+
+		profondeur += 1
+
+		def balises_virg_obligatoire(values, param): 
+			return values and (isinstance(values[-1], (str, bytes)) or param in ['"', "'"])
 
 		if ss.isindent: 
-			dklg = '\n'+'\t'*nbr
-			virg = '%s\t\t;%s' % (dklg,  nbr)
+			indentation = '\n'+'\t'*profondeur
 		else: 
-			dklg = ''
-			virg = ';%s'%nbr
+			indentation = ''
+
+		if ss.isformat2:
+			virg = ';'
+		else:
+			virg = ';%s'%profondeur
 
 		vtype = type(valeur).__name__
 
 		if istype('dict', vtype=vtype):
-			desc = '{'
+
+			keys = list(valeur.keys())
+			values = list(valeur.values())
 
 			if ss.isformat2:
-				sep = ''
-				virg = ';'
-				pk = pv = False
+				sep_key_value = ('\t' if ss.isindent else '')+':'
+				param_key = param_value = False
 			else:
-				pk = isuniforme(list(valeur.keys()))
-				pv = isuniforme(list(valeur.values()))
-				sep = (' ' if pv else nbr)
-				virg = ('; ' if pv else virg) 
+				param_key   = isuniforme(keys)
+				param_value = isuniforme(values)
+				sep_key_value = '%s:%s'%('\t' if ss.isindent else '', ' ' if param_value else profondeur)
+				if param_value: virg = '; '
 
-			kgetsymb = (1 if pk and pk != ';' else 0)
-			vgetsymb = (1 if pv and pv != ';' else 0)
+			simplification = ''
 
-			for i in valeur:
-				if len(desc) > 1: desc += virg
-				else:
-					if pk and pk != ";": desc += '%s:'%pk
-					if pv and (pv != ';' or not ss.isformat2):
-						desc += '%s|'%pv
-					elif pk and pk != ";": desc += '|'
+			key_getbalise = 0
+			if param_key and param_key != ";": 
+				simplification += '%s:'%param_key
+				key_getbalise = 1
 
-				value = ss.encoder(valeur[i], nbr, vgetsymb)
-				desc += '%s%s:%s%s'%(ss.encoder(i, nbr, kgetsymb),
-									('\t' if ss.isindent else ''), 
-									sep,
-									value)
+			value_getbalise = 0
+			if param_value and (param_value != ';' or not ss.isformat2):
+				simplification += '%s|'%param_value
+				if param_value != ';': value_getbalise = 1
 
-			if ss.isformat2: 
-				desc += '%s%s}'%(dklg, (';' if value[0] in '"\'' or (pv and pv in '"\'') else '') if len(desc) > 1 else '')
+			keys_encode   = [ss.encode(key, profondeur, key_getbalise) for key in keys]
+			values_encode = [ss.encode(value, profondeur, value_getbalise) for value in values]
+			keys_values = [''.join([keys_encode[nbr], sep_key_value, values_encode[nbr]]) for nbr in range(len(keys))]
+
+			fin = ''
+			if ss.isformat2:
+				if balises_virg_obligatoire(values, param_value):
+					fin = ';'
+				fin = '%s%s}'%(fin,indentation)
+
+			texte = '{%s%s%s'%(simplification,
+							virg.join(keys_values),
+							fin)
 
 		elif istype('list', vtype=vtype):
-			desc = '['
+			param = isuniforme(valeur)
+			getsymb = (1 if param and param != ';' else 0)
 
-			iu = isuniforme(valeur)
-			getsymb = (1 if iu and iu != ';' else 0)
+			values_encode = [ss.encode(value, profondeur, getsymb) for value in valeur]
 
+			simplification = ''
+			if param:
+				if param != ';' or not ss.isformat2: simplification = '%s|'%param 
+				if not ss.isformat2: virg = '; '
+
+			fin = ''
 			if ss.isformat2:
-				virg = ';'
-			else:
-				virg = ('; ' if iu else virg) 
+				if balises_virg_obligatoire(valeur, param):
+					fin = ';'
+				fin = '%s%s]'%(fin,indentation)
 
-			for i in valeur:
-				if len(desc) > 1: desc += virg
-				elif iu and (iu != ';' or not ss.isformat2):
-						desc += '%s|'%iu
-
-				value = ss.encoder(i, nbr, getsymb)
-				desc += value
-
-			if ss.isformat2: 
-				desc += '%s%s]'%(dklg, ';' if value[0] in '"\'' or (iu and iu in '"\'') else '')
+			texte = '[%s%s%s'%(simplification,
+							virg.join(values_encode),
+							fin)
 
 
 		elif istype('tuple', vtype=vtype):
-			desc = '('
+			param = isuniforme(valeur)
+			getsymb = (1 if param and param != ';' else 0)
 
-			iu = isuniforme(valeur)
-			getsymb = (1 if iu and iu != ';' else 0)
+			values = [ss.encode(value, profondeur, getsymb) for value in valeur]
 
+			simplification = ''
+			if param:
+				if param != ';' or not ss.isformat2: simplification = '%s|'%param 
+				if not ss.isformat2: virg = '; '
+
+			fin = ''
 			if ss.isformat2:
-				virg = ';'
-			else:
-				virg = ('; ' if iu else virg) 
+				if balises_virg_obligatoire(valeur, param):
+					fin = ';'
+				fin = '%s%s)'%(fin,indentation)
 
-			for i in valeur:
-				if len(desc) > 1: desc += virg
-				elif iu and (iu != ';' or not ss.isformat2):
-						desc += '%s|'%iu
-
-				desc += ss.encoder(i, nbr, getsymb)
-
-			if ss.isformat2: 
-				desc += '%s%s)'%(dklg, ';' if value[0] in '"\'' or (iu and iu in '"\'') else '')
+			texte = '(%s%s%s'%(simplification,
+							virg.join(values),
+							fin)
 
 
 		elif istype('str', vtype=vtype):
-			desc = '"%s'[getsymb:] % verif_contenue(valeur, isformat2=ss.isformat2)
+			texte = '"%s'[getsymb:] % verif_contenue(valeur, isformat2=ss.isformat2)
 
 		elif istype('bytes', vtype=vtype):
-			desc = "'%s"[getsymb:] % valeur.decode()
+			texte = "'%s"[getsymb:] % valeur.decode()
 
 		elif istype(('int','float'), vtype=vtype):
-			desc = ('%s'%valeur if str(valeur)[0] == '-' else '+%s'%valeur)[getsymb:]
-
-		elif istype('TXTCRcalc', vtype=vtype):
-			desc = '=%s'%valeur.num
-
-		elif istype('TXTCRstr', vtype=vtype):
-			desc = '"%s'[getsymb:]%valeur.text
-
-		elif istype('TXTCRfonc', vtype=vtype):
-			desc = '>%s' % valeur.fonc
+			texte = ('%s'%valeur if str(valeur)[0] == '-' else '+%s'%valeur)[getsymb:]
 
 		elif istype('NoneType', vtype=vtype):
-			desc = 'o%s'[getsymb:] % valeur
+			texte = 'o%s'[getsymb:] % valeur
 
 		elif istype('bool', vtype=vtype):
 			if valeur == False:
-				desc = '0%s'[getsymb:] % valeur
+				texte = '0%s'[getsymb:] % valeur
 			elif valeur == True:
-				desc = '1%s'[getsymb:] % valeur
+				texte = '1%s'[getsymb:] % valeur
+
+		elif istype('TXTCRcalc', vtype=vtype):
+			texte = '=%s'%valeur.num
+
+		elif istype('TXTCRstr', vtype=vtype):
+			texte = '"%s'[getsymb:]%valeur.text
+
+		elif istype('TXTCRcond', vtype=vtype):
+			texte = '>%s' % valeur.condition
+
+		elif istype('TXTCRbool', vtype=vtype):
+			texte = '%s %s'%(1 if valeur.status else 0, valeur.texte)
 
 		elif is_class(valeur) and '__TXTCRvars__' in valeur.__class__.__dict__:
-			data = ss.encode(valeur, nbr=nbr)
+			data = ss.convert(valeur, profondeur=profondeur)
 			if ss.isformat2:
 				data = verif_contenue(data, isformat2=ss.isformat2)
-			desc = '#%s' % data
+			texte = '#%s' % data
 
 		else:
-			raise erreurs.TypeInconnue(type(valeur),nbr,valeur)
+			raise erreurs.TypeInconnue(type(valeur),profondeur,valeur)
 
-		if nbr == 1:
-			return (desc if len(desc) > 2 else None)
-		return dklg + desc
-
-class Encodage(Encoder):
-
-	def __init__(ss, isformat2, isindent=False):
-		ss.isindent = isindent
-		ss.isformat2 = isformat2
-
-	def verif_type(ss, data, nbr, **ops):
-
-		if not data: data = {}
-
-		if is_class(data):
-
-			if "<class 'type'>" != str(data.__class__):
-				clss = data.__class__
-			else:
-				clss = data
-
-			return (ops.get('nom', clss.__name__),
-					ops.get('desc', clss.__doc__),
-					ops.get('repr', clss.__dict__.get('__TXTCRrepr__')),
-					ops.get('repr', clss.__dict__.get('__TXTCRbase__')),
-					ops.get('date', clss.__dict__.get('__TXTCRdate__')),
-					ops.get('hash', clss.__dict__.get('__TXTCRhash__')),
-					ops.get('encodage', clss.__dict__.get('__TXTCRencd__')),
-					ss.encoder({c:v for c,v in data.__dict__.items() if c not in clss.__TXTCRtmps__}, nbr))
-
-		elif isinstance(data, dict):
-
-			def verif(data, param):
-				if param in data: 
-					v = data[param]
-					del data[param]
-					return v
-
-			return (ops.get('nom', verif(data, '__name__')),
-					ops.get('desc', verif(data, '__desc__')),
-					ops.get('repr', verif(data, '__repr__')),
-					ops.get('base', verif(data, '__base__')),
-					ops.get('date', verif(data, '__date__')),
-					ops.get('hash', verif(data, '__hash__')),
-					ops.get('encodage', verif(data, '__encodage__')),
-					ss.encoder(data, nbr))
-
-		else:
-			raise erreurs.TypeMauvais(type(data))
-
-	def encode(ss, data, *, nbr=-1, **ops):
-
-		nbr += 1
-		if ss.isformat2: 
-			txtcr = '|;#'
-			sep = '%s|;|'%('\n' if ss.isindent else '')
-		else: 
-			txtcr = ';%s#'%nbr
-			sep = '%s;%s'%('\n' if ss.isindent else '', nbr)
-
-		infos = ss.verif_type(data, nbr, **ops)
-		balises = list(balises_en_tete.keys())
-		for inbr in range(len(infos)):
-			info = infos[inbr]
-			if info:
-				balise = balises[inbr]
-				txtcr += '%s%s%s'%(sep, balise, (info if balise == 'I#' else verif_contenue(info, addsep=False, isformat2=ss.isformat2)))
-
-		return txtcr
-
-def _encode(datas, fichier=None, *, format=2, aff=False, liste=False, indent=True, **ops):
-
-	if not isinstance(datas, (list, tuple)):
-		datas = [datas]
-
-	txtcrs = []
-	for data in datas:
-		encode = Encodage(format-1, indent)
-		txtcrs.append(encode.encode(data, **ops))
-		encode = None
-
-	if fichier: fichier.write('\n'.join(txtcrs))
-
-	if not aff: 
-		for nbr in range(len(txtcrs)):
-			txtcrs[nbr] = txtcrs[nbr].replace('\n', '').replace('\t', '')
-
-	return (txtcrs[0] if len(txtcrs) == 1 and not liste else txtcrs)
+		if profondeur == 1:
+			return (texte if len(texte) > 2 else None)
+		return indentation + texte

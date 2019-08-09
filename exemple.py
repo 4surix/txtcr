@@ -1,23 +1,29 @@
 import txtcr
 
 #Format 1 --------------------------------
-exemple = txtcr.decode("""|;#
+texte = """
+;0#
+;0N#MiniExemple
+;0I#{
+	"exemple:1
+	"pouet
+"""
+#or texte = """;0#;0N#MiniExemple;0I#{"exemple:1"pouet"""
+exemple = txtcr.decode(texte)
+
+print(exemple.exemple)
+
+#Format 2 --------------------------------
+texte = """
+|;#
 |;|N#MiniExemple
 |;|I#{
 	"exemple:
 	"patapouf
 	}
-""")
-
-print(exemple.exemple)
-
-#Format 2 --------------------------------
-exemple = txtcr.decode(""";0#
-;0N#MiniExemple
-;0I#{
-	"exemple:1
-	"pouet
-""")
+"""
+#or texte = """|;#|;|N#MiniExemple|;|I#{"exemple:"patapouf}"""
+exemple = txtcr.decode(texte)
 
 print(exemple.exemple)
 
@@ -38,7 +44,7 @@ with txtcr.fichier('exemple.txtcr', 'w') as exemple:
 	exemple.exemple = 'plouf'
 	#Les modifications sont enregistrées automatiquement à la fin
 
-#Format 1 simplifié ---------------------
+#Format 2 simplifié ---------------------
 exemple = txtcr.decode("""|;#
 |;|N#FormatSimplifier
 |;|I#{
@@ -51,3 +57,21 @@ exemple = txtcr.decode("""|;#
 """)
 
 print(exemple.exemple['Texte_in_liste'][1])
+
+#Conditions -----------------------------
+exemple = txtcr.decode("""|;#
+|;|N#Condition
+|;|I#{
+	+0: -12.5;
+	-12.5: 'armoire;
+	"nbr: +0;
+	"exemple:
+	> ###nbr### = #value# = 1 C'est égal à value & (+1 in [+2] | (+3.5 > +1 & -4 < +2))
+}
+""")
+
+def aff(value, **ops): 
+	print("C'est égal à %s"%(value))
+
+exemple.exemple.action_if(true=aff, false=lambda **ops: print('Oups !'))
+exemple.exemple(value=b'armoire')

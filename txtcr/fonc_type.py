@@ -17,9 +17,13 @@ def recup_num(num, variable):
 	else: num = ''
 	return num, variable
 
-def replace_variables(texte, variables, remplacement):
+def replace_variables(texte_precedent, variables, remplacement):
 
-	if texte.count('#') > 1:
+	values_not_str = {}
+
+	texte = texte_precedent[:]
+
+	while texte.count('#') > 1:
 		
 		for morceau in texte.split('#'):
 			num = '#'
@@ -27,38 +31,46 @@ def replace_variables(texte, variables, remplacement):
 			if '|' in morceau:
 				morceau, num = morceau.split('|')
 
+			m = values_not_str.get(morceau, '#')
+			if m != '#': morceau = m
+
 			variable = variables.get(morceau, '#')
 			if variable != '#':
-				num, variable = recup_num(num, variable)
-				var = '#%s%s#'%(morceau, num)
-				texte = texte.replace(var, variable)
-				continue
+				num, value = recup_num(num, variable)
+				values_not_str[str(value)] = value
+				texte = texte.replace('#%s%s#'%(morceau, num), str(value))
 
-			remplace = ([r for r in [r.get(morceau) for r in remplacement] if r] + [None])[0]
-			if remplace:
-				num, variable = recup_num(num, variable)
-				var = '#%s%s#'%(morceau, num)
-				texte = texte.replace(var, remplace)
+			else:
+				remplace = ([r for r in [r.get(morceau) for r in remplacement] if r] + [None])[-1]
+				if remplace:
+					num, variable = recup_num(num, variable)
+					var = '#%s%s#'%(morceau, num)
+					texte = texte.replace(var, remplace)
 
-	return texte
+		if texte_precedent == texte:
+			break
+		texte_precedent = texte
 
+	return values_not_str.get(texte, texte)
+			
 def recup_partie_parentese(texte, fonction=None):
-	d = 0
-	poc = 0
-	pfc = 0
+	début = 0
+	fin = 0
+	parentese_ouverture_croiser = 0
+	parentese_fermeture_croiser = 0
 
-	for nbr, l in enumerate(texte):
-		if l == '(':
-			if not d: d = nbr
-			if not pfc: poc += 1
-			else: pfc -= 1
-		if l == ')':
-			pfc += 1
-			if poc == pfc:
-				f = nbr
+	for nbr, carac in enumerate(texte):
+		if carac == '(':
+			if not début: début = nbr
+			if not parentese_fermeture_croiser: parentese_ouverture_croiser += 1
+			else: parentese_fermeture_croiser -= 1
+		elif carac == ')':
+			parentese_fermeture_croiser += 1
+			if parentese_ouverture_croiser == parentese_fermeture_croiser:
+				fin = nbr
 				break
 
-	if not fonction: return d,f
+	if not fonction: return début, fin
 
 	resulta = fonction(texte[d+1:f])
 	text = list(texte)
@@ -128,75 +140,83 @@ class Calcul:
 
 calc = Calcul()
 
-#Type Fonction 
+#Type Fonction --------------------------------------
+
+func_conditions = {
+	'>': lambda var1, var2: var1 > var2,
+	'<': lambda var1, var2: var1 < var2,
+	'=': lambda var1, var2: var1 == var2,
+	'!': lambda var1, var2: var1 != var2,
+	'in': lambda var1, var2: var1 in var2,
+	'!in': lambda var1, var2: var1 not in var2,
+	'&': lambda var1, var2: var1 and var2,
+	'|': lambda var1, var2: var1 or var2
+}
+
 class DefCondition:
 
-	def __init__(ss, fonc, variables):
+	def __init__(ss, fonc, variables, remplacement, decode):
 		ss.fonction = fonc
 		ss.variables = variables
+		ss.remplacement = remplacement
+		ss.decode = decode
 
-	def param(ss, p):
-		p = str(p)
-		b = p[0]
+	def convert(ss, value):
+		if value[0] == '#':
+			value = replace_variables(value, ss.variables, ss.remplacement)
+		else:
+			value = ss.decode(value)
+		return value
 
-		if b == '#': 
-			return ss.variables.get(p[1:-1])
-		elif b in 'Noø':
-			return None
-		elif b in 'F0':
-			return False
-		elif b in 'T1':
-			return True
-		elif b in '+-0123456789':
-			if ',' in p: return float(p.replace(',','.'))
-			elif '.' in p: return float(p)
-			else: return int(p)
+	def config_condition(ss, texte):
+		valeur_actuel = []
+		condition_actuel = []
 
-	def verif(ss, symb):
-		ss.symb = symb
-		p1, p2 = _split(ss.fonc, symb)
-		ss.p1, ss.p2 = p1.split()[-1], p2.split()[0]
-		return ss.param(ss.p1), ss.param(ss.p2)
+		def ajout_valeur(va):
+			if va: condition_actuel.append(ss.convert(' '.join(va)))
+		
+		for partie in texte.split(' '):
+			if not partie: continue
+			
+			if partie in func_conditions:
+				ajout_valeur(valeur_actuel)
+				condition_actuel.append(partie)
+				valeur_actuel = []
+					
+			else: valeur_actuel.append(partie)
 
-	def conditions(ss):
-		if ' > ' in ss.fonc: 
-			v1, v2 = ss.verif(' > ')
-			return v1 > v2
-		elif ' < ' in ss.fonc:
-			v1, v2 = ss.verif(' < ')
-			return v1 < v2
-		elif ' = ' in ss.fonc:
-			v1, v2 = ss.verif(' = ')
-			return v1 == v2
-		elif ' ! ' in ss.fonc:
-			v1, v2 = ss.verif(' ! ')
-			return v1 != v2
-		elif ' in ' in ss.fonc:
-			v1, v2 = ss.verif(' in ')
-			return v1 in v2
-		elif ' !in ' in ss.fonc:
-			v1, v2 = ss.verif(' !in ')
-			return v1 not in v2
-		elif ' & ' in ss.fonc:
-			v1, v2 = ss.verif(' & ')
-			return v1 and v2
-		elif ' | ' in ss.fonc:
-			v1, v2 = ss.verif(' | ')
-			return v1 or v2
-		else: return None
+		ajout_valeur(valeur_actuel)
+		return condition_actuel
 
-	def partie(ss, fonc):
-		ss.fonc = fonc
+	def decoupe_condition(ss, texte):
+		liste_condition = []
 		while 1:
-			c = ss.conditions()
-			if c is not None:
-				ss.fonc = ss.fonc.replace('%s%s%s'%(ss.p1,ss.symb,ss.p2), str(c))
-			else: break
-		return ss.fonc
+			début, fin = recup_partie_parentese(texte)
+			if fin:
+				if début: liste_condition.extend(ss.config_condition(texte[:début]))
+				liste_condition.append(ss.decoupe_condition(texte[début+1:fin]))
+				texte = texte[fin+1:]
+			else:
+				liste_condition.extend(ss.config_condition(texte))
+				break
+		return liste_condition
+
+	def get_values_and_symb(ss, liste):
+		for nbr in range(0, len(liste)-1, 2):
+			yield [nbr+2] + liste[nbr:nbr+3]
+
+	def is_condition(ss, value):
+		if isinstance(value, list) and len(value) >= 3 and value[1] in func_conditions:
+			return True
+
+	def applique_condition(ss, liste_conditions):
+		for place, value1, symb, value2 in ss.get_values_and_symb(liste_conditions):
+			if ss.is_condition(value1):
+				value1 = ss.applique_condition(value1)
+			if ss.is_condition(value2):
+				value2 = ss.applique_condition(value2)
+			liste_conditions[place] = func_conditions.get(symb)(value1, value2)
+		return liste_conditions[-1]
 
 	def analyse(ss):
-
-		while '(' in ss.fonction:
-			ss.fonction = recup_partie_parentese(ss.fonction, ss.partie)
-
-		return ss.param(ss.partie(ss.fonction).replace(' ',''))
+		return ss.applique_condition(ss.decoupe_condition(ss.fonction))

@@ -1,6 +1,6 @@
 from .utile import *
+from .types import *
 from . import erreurs
-from . import encode
 
 def separer(texte):
 
@@ -15,7 +15,7 @@ def separer(texte):
 	symb_croiser = 0
 	enregistrement = 0
 
-	types_simplifiables = ['"', "'", "+", "-", "0", "1"]
+	types_textuel = ['"', "'"]
 
 	for nbr, carac in enumerate(texte+'-'):
 
@@ -30,7 +30,7 @@ def separer(texte):
 			meme_type = False
 			enregistrement = 0
 
-		if sep in types_simplifiables:
+		if sep in types_textuel:
 			if carac == '|':
 				meme_type = sep[0]
 				continue
@@ -42,7 +42,7 @@ def separer(texte):
 			echapement = True
 			continue
 
-		elif carac in types_simplifiables:
+		elif not in_texte and carac in types_textuel:
 			sep = carac
 			continue
 
@@ -87,7 +87,7 @@ def separer_dict_format2(texte, _):
 			if carac == " ":
 				continue
 			liste.append(texte[nbr:])
-			return liste
+			break
 
 		if carac == "\\":
 			echapement = True
@@ -99,307 +99,115 @@ def separer_dict_format2(texte, _):
 
 		echapement = False
 
+	return liste
+
 def separer_dict_format1(texte, sep):
 	return texte.split(sep)
 
-class Decoder:
+class Decode:
 
-	def decoder(ss, texte, nbr, *, bdict=False):
+	def __init__(ss, isformat2, variables, remplacement):
+		ss.isformat2 = isformat2
+		ss.variables = variables
+		ss.remplacement = remplacement
 
-		nbr += 1
+	def __call__(ss, *cle):
+		return ss.decoder(*cle)
+
+	def decoder(ss, texte, profondeur=-1):
+
+		profondeur += 1
 
 		if not ss.isformat2:
-			virg = ';%s' % nbr
+			virg = ';%s' % profondeur
 		else:
-			virg = '; '
+			virg = ';'
 
 		balise = texte[0]
 		texte = texte[1:]
 
 		if balise == "{":
-			desc = {}
+			valeur_decoder = {}
 
 			if ss.isformat2:
-				sep = ':'
+				sep_key_value = ':'
 				values = separer(texte[:-1])
-				symb_value = symb_key = ''
+				balise_value = balise_key = ''
 				separer_dict = separer_dict_format2
 			else:
-				_, symb_key, text = isparam(':', texte, virg)
-				virg, symb_value, text = isparam('|', text, virg)
-				sep = ":%s" % (' ' if virg == '; ' else nbr)
+				_, balise_key, text = is_meme_balise(':', texte, virg)
+				virg, balise_value, text = is_meme_balise('|', text, virg)
+				sep_key_value = ":%s" % (' ' if virg == '; ' else profondeur)
 				values = text.split(virg)
 				separer_dict = separer_dict_format1
 
-			for v in values:
-				if not v: continue
+			for value in values:
+				if not value: continue
 
-				ops = separer_dict(v, sep)
-				if not isinstance(ops, (tuple, list)) or len(ops) != 2:
-					raise erreurs.SeparationError(texte, balise, ops, nbr)
-				cle, value = ss.decoder(symb_key+ops[0], nbr), ss.decoder(symb_value+ops[1], nbr)
-				desc[cle] = value
-
-				if bdict: bdict.__dict__[cle] = value
+				ops = separer_dict(value, sep_key_value)
+				if len(ops) != 2: raise erreurs.SeparationError(texte, balise, ops, profondeur)
+				valeur_decoder[ss.decoder(balise_key+ops[0], profondeur)] = ss.decoder(balise_value+ops[1], profondeur)
 
 		elif balise == "[":
-			desc = []
-
-			virg, symb, texte = isparam('|', texte, virg)
+			virg, balise, texte = is_meme_balise('|', texte, virg)
 
 			if ss.isformat2:
 				values = separer(texte[:-1])
 			else:
 				values = texte.split(virg)
 
-			for v in values:
-				if not v: continue
-				desc.append(ss.decoder(symb+v, nbr))
+			valeur_decoder = [ss.decoder(balise+v, profondeur) for v in values if v]
 
 		elif balise == "(":
-			desc = ()
-
-			virg, symb, texte = isparam('|', texte, virg)
+			virg, balise, texte = is_meme_balise('|', texte, virg)
 
 			if ss.isformat2:
 				values = separer(texte[:-1])
 			else:
 				values = texte.split(virg)
 
-			for v in values:
-				if not v: continue
-				desc += (ss.decoder(symb+v, nbr),)
+			valeur_decoder = tuple([ss.decoder(balise+v, profondeur) for v in values if v])
 
 		elif balise == '"':
-			desc = verif_contenue(texte, ss.variables, ss.remplacement, decode=True, isformat2=ss.isformat2)
+			valeur_decoder = verif_contenue(texte, ss.variables, ss.remplacement, decode=True, isformat2=ss.isformat2)
+			if valeur_decoder.count('#') >= 2:
+				valeur_decoder = TXTCRstr(texte)
+				valeur_decoder._variables = ss.variables
+				valeur_decoder._remplacement = ss.remplacement
 
 		elif balise == "'":
-			desc = texte.encode()
+			valeur_decoder = texte.encode()
 
 		elif balise == "0":
-			desc = False
+			valeur_decoder = TXTCRbool(False, texte)
 
 		elif balise == "1":
-			desc = True
+			valeur_decoder = TXTCRbool(True, texte)
 
 		elif balise == '>':
-			desc = TXTCRfonc(texte, ss.variables, ss.remplacement)
+			valeur_decoder = TXTCRcond(texte, ss.variables, ss.remplacement, ss.decoder)
 
 		elif balise == '#':
 			data = texte[3:]
 			if ss.isformat2:
-				data = verif_contenue(data, decode=True, isformat2=ss.isformat2, istexte=False)
-			desc = ss.decode(data, nbr, variables=ss.variables, remplacement=ss.remplacement)
+				data = verif_contenue(data, decode=True, isformat2=ss.isformat2)
+			valeur_decoder = ss.convert(data, profondeur, variables=ss.variables, remplacement=ss.remplacement)
 
 		elif balise == '=':
-			desc = TXTCRcalc(texte, ss.variables, ss.remplacement)
+			valeur_decoder = TXTCRcalc(texte, ss.variables, ss.remplacement)
 
 		elif balise in ['+','-']:
 			texte = balise+texte
-			if ',' in texte: desc = float(texte.replace(',', '.'))
-			elif '.' in texte: desc = float(texte)
-			else: desc = int(texte)
-				
+			if ',' in texte: 
+				texte = texte.replace(',', '.')
+				valeur_decoder = float(texte)
+			elif '.' in texte: 
+				valeur_decoder = float(texte)
+			else: valeur_decoder = int(texte)
+					
 		elif balise.lower() in ["o", "ø"]:
-			desc = None
+			valeur_decoder = None
 
-		else:
-			raise erreurs.BaliseError(texte, balise, nbr)
+		else: raise erreurs.BaliseError(texte, balise, profondeur)
 
-		return desc
-
-class Decodage(Decoder):
-
-	def __init__(ss, isformat2):
-		ss.variables = []
-		ss.remplacement = []
-		ss.isformat2 = isformat2
-
-	def new_class(ss, nbr, **params):
-		
-		pc = params.get('parentclass', Clss)
-		class Class(pc):
-
-			__decodage__ = ss.decoder
-			__encodage__ = encode.Encodage(ss.isformat2).encode
-			__encode__ = encode.Encoder(ss.isformat2).encoder
-
-			def __setitem__(ss, item, valeur):
-				ss.__dict__[item] = valeur
-
-			def __getitem__(ss, item):
-				return ss.__dict__[item]
-
-			def __setattr__(ss, item, valeur): 
-				if (is_class(valeur) 
-				and '__TXTCRvars__' in valeur.__class__.__dict__):
-					ss.__class__.__TXTCRvars__.append(valeur.__dict__)
-					valeur.__class__.__TXTCRvars__.append(ss.__dict__)
-				ss.__dict__[item] = valeur
-
-			def get(ss, balise, param=None, *, defaut=None):
-				css = ss.__class__
-
-				valeur = ([v for c,v in {
-					('N', 'name')	: css.__name__,
-					('T', 'date')	: css.__TXTCRdate__,
-					('D', 'desc')	: css.__doc__,
-					('H', 'hash')	: css.__TXTCRhash__,
-					('E', 'encd')	: css.__TXTCRencd__,
-					('I', 'info')	: (ss.__dict__.get(param, defaut) if param else {c:v for c,v in ss.__dict__.items()}),
-					('B', 'base')	: (base_to_dict(ss.__decodage__, css.__TXTCRbase__).get(param, defaut) if param else css.__TXTCRbase__),
-				}.items() if balise in c] + [False])[0]
-
-				if valeur is None:
-					valeur = defaut
-				return valeur
-
-			def getnew(ss, balise, param=None, *, new):
-				r = ss.get(balise, param)
-				if r is None:
-					if param: param = {balise:{param:new}}
-					else: param = {balise:new}
-					ss.config(mode='A', **param)
-					return new
-				return r
-
-			def config(ss, mode='A', **params):
-
-				def modifdict(info, data):
-
-					if mode == 'W':
-						for c in [c for c in info]:
-							del info[c]
-						for c,v in data.items():
-							info[c] = v
-					elif 'A' in mode:
-						for c,v in data.items():
-							if c not in info:
-								info[c] = v
-					elif 'E' in mode:
-						for c,v in data.items():
-							if c in info:
-								info[c] = v
-					else:
-						raise Exception('Mode incorecte !')
-
-				def modif(*valeur):
-
-					if mode == 'W':
-						valeur[0] = valeur[1]
-					elif mode == 'A':
-						if not valeur[0]:
-							valeur[0] = valeur[1]
-					elif mode == 'E':
-						if valeur[0]:
-							valeur[0] = valeur[1]
-					else:
-						raise Exception('Mode incorecte !')
-
-				for param, data in params.items():
-
-					if param == 'N': 
-						modif(ss.__class__.__name__, data)
-					elif param == 'D':
-						modif(ss.__class__.__doc__, data)
-					elif param == 'R':
-						modif(ss.__class__.__TXTCRrepr__, data)
-					elif param == 'T':
-						modif(ss.__class__.__TXTCRdate__, data)
-					elif param == 'E':
-						modif(ss.__class__.__TXTCRencd__, data)
-					elif param == 'H':
-						modif(ss.__class__.__TXTCRhash__, data)
-					elif param == 'B':
-						info = base_to_dict(ss.__decodage__, ss.__class__.__TXTCRbase__)
-						modifdict(info, data)
-						ss.__class__.__TXTCRbase__ = '; '.join(['%s= %s'%(c, ss.__encode__(v, 0)) for c,v in info.items()])
-					elif param == 'I':
-						if isinstance(data, dict):
-							modifdict(ss.__dict__, data)
-						else:
-							modifdict(ss.__dict__, ss.__decodage__(data.replace('\n', '').replace('\t', ''),  nbr))
-					else:
-						raise Exception('Param incorecte !')
-
-			def encode(ss, **ops):
-				return ss.__encodage__(ss, **ops)
-
-			def __eq__(ss, clss):
-				return str(ss) == str(clss)
-
-			def __repr__(ss):
-				clss = ss.__class__
-				if not ss.__TXTCRrepr__:
-					return '<Not R#>'
-				return str(ss.__TXTCRrepr__).format(
-						N=clss.__name__,
-						D=clss.__doc__,
-						T=clss.__TXTCRdate__,
-						E=clss.__TXTCRencd__,
-						H=clss.__TXTCRhash__,
-						I=ss
-											)
-
-		remplacement = params.get('base', '')
-		ss.remplacement.append(base_to_dict(ss.decoder, remplacement))
-
-		newclass = Class()
-		newclass.__class__.__name__				= params.get('name', '')
-		newclass.__class__.__doc__				= params.get('desc')
-		newclass.__class__.__TXTCRdate__		= params.get('date')
-		newclass.__class__.__TXTCRencd__		= params.get('encd')
-		newclass.__class__.__TXTCRhash__		= params.get('hash')
-		newclass.__class__.__TXTCRrepr__		= params.get('repr')
-		newclass.__class__.__TXTCRbase__		= remplacement
-		newclass.__class__.__TXTCRtmps__		= []
-		newclass.__class__.__TXTCRvars__		= ss.variables
-
-		ss.variables.append(newclass.__dict__)
-		ss.decoder(params.get('info', '{'), nbr, bdict=newclass)
-
-		return newclass
-
-	def decode(ss, data, nbr=-1, parentclass=None, **ops):
-
-		params = {}
-		if parentclass: params['parentclass']=parentclass
-
-		nbr += 1
-
-		if ss.isformat2:
-			sep = '|;|'
-		else:
-			sep = ";%s"%nbr
-
-		for d in data.split(sep):
-			if not d: continue
-			balise = balises_en_tete[d[:2]]
-			params[balise] = d[2:] if balise == 'info' else verif_contenue(d[2:], decode=True, addsep=False, isformat2=ss.isformat2)
-
-		return ss.new_class(nbr, **params)
-
-def _decode(datas=None, fichier=None, liste=False, **ops):
-
-	if fichier: datas = fichier.read()
-	if not datas or not isinstance(datas, str):
-		raise erreurs.FormatMauvais(type(datas))
-
-	datas = datas.replace('\n', '').replace('\t', '')
-
-	txtcr_format = datas[:3]
-	if txtcr_format == ';0#':
-		isformat2 = False
-	elif txtcr_format == '|;#':
-		isformat2 = True
-	else:
-		raise erreurs.FormatInconnue(txtcr_format)
-
-	txtcrs = []
-	for data in datas.split(txtcr_format):
-		if not data: continue
-		decode = Decodage(isformat2)
-		txtcrs.append(decode.decode(data, **ops))
-		decode = None
-
-	return (txtcrs[0] if len(txtcrs) == 1 and not liste else txtcrs)
+		return valeur_decoder
