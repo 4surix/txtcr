@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 def recup_variables(_variables):
 	variables = {}
@@ -9,13 +10,11 @@ def recup_variables(_variables):
 	for v in _variables: decompose(v)
 	return variables
 
-def recup_num(num, variable):
+def recup_partie_variable(num, variable):
 	if num != '#':
 		if num[:1] in '-+0123456789':
 			variable = variable[int(num)]
-		num = '|%s'%num
-	else: num = ''
-	return num, variable
+	return variable
 
 def replace_variables(texte_precedent, variables, remplacement):
 
@@ -27,6 +26,7 @@ def replace_variables(texte_precedent, variables, remplacement):
 		
 		for morceau in texte.split('#'):
 			num = '#'
+			base_variable = '#%s#'%morceau
 
 			if '|' in morceau:
 				morceau, num = morceau.split('|')
@@ -34,18 +34,12 @@ def replace_variables(texte_precedent, variables, remplacement):
 			m = values_not_str.get(morceau, '#')
 			if m != '#': morceau = m
 
-			variable = variables.get(morceau, '#')
+			variable = variables.get(morceau, (['#'] + [r for r in [r.get(morceau, '#') for r in remplacement] if r != '#'])[-1])
 			if variable != '#':
-				num, value = recup_num(num, variable)
-				values_not_str[str(value)] = value
-				texte = texte.replace('#%s%s#'%(morceau, num), str(value))
-
-			else:
-				remplace = ([r for r in [r.get(morceau) for r in remplacement] if r] + [None])[-1]
-				if remplace:
-					num, variable = recup_num(num, variable)
-					var = '#%s%s#'%(morceau, num)
-					texte = texte.replace(var, remplace)
+				value = recup_partie_variable(num, variable)
+				value_str = str(value)
+				values_not_str[value_str] = value
+				texte = texte.replace(base_variable, value_str)
 
 		if texte_precedent == texte:
 			break
@@ -72,13 +66,16 @@ def recup_partie_parentese(texte, fonction=None):
 
 	if not fonction: return début, fin
 
-	resulta = fonction(texte[d+1:f])
+	resulta = fonction(texte[début+1:fin])
 	text = list(texte)
-	del text[d:f+1]
-	text.insert(d, resulta)
+	del text[début:fin+1]
+	text.insert(début, resulta)
 
 	return ''.join(text)
 
+#Type Calcul (à optimisé) ------------------------------------
+
+#Sert à récupérer les 2 nombres à côter d'un symbole, n1 = Nombre 1, n2 = Nombre 2
 def _split(texte, symb):
 	r = texte.split(symb)
 	if not r[0]: n1, n2 = r[1], r[2]
@@ -88,7 +85,7 @@ def _split(texte, symb):
 
 class Calcul:
 	
-	nums = [str(num) for num in range(10)] + ['.', ',']
+	caracs_nombre = list(map(str, range(10))) + ['.', ',']
 	
 	def getnbr(ss, v, alinvers=False):
 		v = list(v)
@@ -97,7 +94,7 @@ class Calcul:
 		num = v.pop(0)
 		
 		for carac in v:
-			if carac in ss.nums:
+			if carac in ss.caracs_nombre:
 				num += carac
 			elif alinvers and carac in ['-']:
 				num += carac
@@ -106,9 +103,11 @@ class Calcul:
 
 		if alinvers: num = num[::-1]
 			
+		#Convertion Nombre str en Int/Float
 		if ',' in num: nbr = float(num.replace(',', '.'))
 		elif '.' in num: nbr = float(num)
 		else: nbr = int(num)
+
 		return nbr, num
 
 	def sep(ss, equ, symb):
@@ -140,7 +139,7 @@ class Calcul:
 
 calc = Calcul()
 
-#Type Fonction --------------------------------------
+#Type Fonction -----------------------------------------
 
 func_conditions = {
 	'>': lambda var1, var2: var1 > var2,
@@ -172,8 +171,8 @@ class DefCondition:
 		valeur_actuel = []
 		condition_actuel = []
 
-		def ajout_valeur(va):
-			if va: condition_actuel.append(ss.convert(' '.join(va)))
+		def ajout_valeur(valeur):
+			if valeur: condition_actuel.append(ss.convert(' '.join(valeur)))
 		
 		for partie in texte.split(' '):
 			if not partie: continue

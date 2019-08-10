@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 def Func():pass
 func = type(Func)
 class Clss:pass
@@ -106,20 +108,14 @@ def is_class(valeur):
 		if '__module__' in valeur.__class__.__dict__:
 			return True
 
-def verif_contenue(texte, variables=[], remplacements={}, *, decode=False, addsep=True, isformat2=True):
+def verif_contenue(texte, *, decode=False, addsep=True, isformat2=True):
 
 	texte = str(texte)
 
-	if not addsep: 
-		if isformat2:
-			verifs = expregu2
-		else:
-			verifs = expregu
-	else: 
-		if isformat2:
-			verifs = seps2 + expregu2
-		else:
-			verifs = seps + expregu
+	if isformat2:
+		verifs = expregu2 + (seps2 if addsep else [])
+	else:
+		verifs = expregu + (seps if addsep else [])
 
 	for param, remplacement in verifs:
 		if decode and remplacement in texte: texte = texte.replace(remplacement, param)

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 class SeparationError(Exception):
 	"""Mauvaise séparation"""
 

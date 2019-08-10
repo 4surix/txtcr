@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from .utile import *
 from . import erreurs
 from . import txtcr_class

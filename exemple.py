@@ -75,3 +75,17 @@ def aff(value, **ops):
 
 exemple.exemple.action_if(true=aff, false=lambda **ops: print('Oups !'))
 exemple.exemple(value=b'armoire')
+
+#Types ----------------------------------
+exemple = txtcr.decode("""|;#
+|;|N#Types
+""")
+
+txtcr.cond(exemple, if_modo='#id# in #modos#')
+txtcr.bool(exemple, pouet=False) #Pas très utile, cela revient à faire exemple.pouet = True, 
+								#mais possibilité de mettre un commentaire par la suite avec exemple.pouet.comm('Commentaire')
+txtcr.bool(exemple, arbre=(False, "Ce n'est pas un arbre"))
+
+exemple.pouet = True
+exemple.if_modo = '> #id# in #ids_modos#'
+print(exemple.encode())

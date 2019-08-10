@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from .utile import *
 from . import erreurs
 
@@ -132,7 +134,7 @@ class Encode:
 				texte = '1%s'[getsymb:] % valeur
 
 		elif istype('TXTCRcalc', vtype=vtype):
-			texte = '=%s'%valeur.num
+			texte = '=%s'%valeur.calcul
 
 		elif istype('TXTCRstr', vtype=vtype):
 			texte = '"%s'[getsymb:]%valeur.text
@@ -141,7 +143,7 @@ class Encode:
 			texte = '>%s' % valeur.condition
 
 		elif istype('TXTCRbool', vtype=vtype):
-			texte = '%s %s'%(1 if valeur.status else 0, valeur.texte)
+			texte = '%s%s'%(1 if valeur.status else 0, valeur.commentaire)
 
 		elif is_class(valeur) and '__TXTCRvars__' in valeur.__class__.__dict__:
 			data = ss.convert(valeur, profondeur=profondeur)
