@@ -11,15 +11,20 @@ def separer(texte):
 	début = 0
 	balise = ''
 	valeurs = []
+	in_cond = False
 	in_texte = False
+	in_txtcr = False
+	in_parent = False
 	meme_type = False
 	echapement = False
 	symb_croiser = 0
 	enregistrement = 0
 
-	types_textuel = ['"', "'"]
+	types_textuel = ['"', "'", '=']
 
 	for nbr, carac in enumerate(texte+'-'):
+
+		#print(carac, in_texte, in_cond, in_txtcr, symb_croiser)
 
 		if enregistrement:
 			if carac == " ":
@@ -44,23 +49,40 @@ def separer(texte):
 			echapement = True
 			continue
 
+		elif carac == '<' and not in_texte and not in_cond:
+			in_txtcr = True
+			continue
+
+		elif carac == '>' and not in_texte and not in_cond:
+			in_txtcr = False
+			continue
+
 		elif not in_texte and carac in types_textuel:
 			balise = carac
 			continue
 
-		elif not symb and carac in '{[(':
+		elif carac in '{[(' and not in_texte and not in_cond and not symb:
 			symb = carac
 			asymb = {'{':'}','[':']','(':')'}.get(symb)
 
-		elif not echapement and carac == ';':
+		elif carac == ';' and not echapement:
 			if in_texte:
 				in_texte = False
-			if not symb_croiser:
+			if not symb_croiser and not in_cond and not in_txtcr:
 				enregistrement = nbr
 				continue
 
-		elif not echapement and carac == ':' and in_texte:
-			in_texte = False
+		elif not echapement and carac == ':':
+			if in_texte: 
+				in_texte = False
+			if in_cond:
+				if not in_parent: 
+					in_cond = False
+			elif balise == ':':
+				in_cond = True
+				balise = ''
+			else:
+				balise = ':'
 			continue
 
 		echapement = False
@@ -74,7 +96,7 @@ def separer(texte):
 			symb_croiser -= 1
 
 	valeurs.append(texte[début:nbr])
-	
+
 	return valeurs
 
 def separer_dict_format2(texte, _):
@@ -144,7 +166,7 @@ class Decode:
 				separer_dict = separer_dict_format1
 
 			for value in values:
-				if not value: continue
+				if not value or value[0] == '/': continue
 
 				ops = separer_dict(value, sep_key_value)
 				if len(ops) != 2: raise erreurs.SeparationError(texte, balise, ops, profondeur)
@@ -171,41 +193,46 @@ class Decode:
 			valeur_decodée = tuple([ss.decoder(balise+v, profondeur) for v in values if v])
 
 		elif balise == '"':
+			if texte[-1:] == '"' and texte[-2:] != '\\"': texte = texte[:-1]
 			valeur_decodée = verif_contenue(texte, decode=True, isformat2=ss.isformat2)
+
 			if valeur_decodée.count('#') >= 2:
-				valeur_decodée = TXTCRstr(texte)
+				valeur_decodée = TXTCRstr(valeur_decodée)
 				valeur_decodée._variables = ss.variables
 				valeur_decodée._remplacement = ss.remplacement
+				valeur_decodée._decode = ss.decoder
 
 		elif balise == "'":
+			if texte[-1:] == "'" and texte[-2:] != "\\'": texte = texte[:-1]
 			valeur_decodée = texte.encode()
 
+		elif balise == "O":
+			valeur_decodée = None
+			
 		elif balise == "0":
 			valeur_decodée = TXTCRbool(False, texte)
 
 		elif balise == "1":
 			valeur_decodée = TXTCRbool(True, texte)
 
-		elif balise == '>':
-			valeur_decodée = TXTCRcond(texte, ss.variables, ss.remplacement, ss.decoder)
+		elif balise == ':':
+			valeur_decodée = TXTCRcond(verif_contenue(texte, decode=True, addsep=False, isformat2=ss.isformat2), ss.variables, ss.remplacement, ss.decoder)
 
-		elif balise == '#':
-			data = texte[3:]
+		elif balise == '<':
+			data = texte[:-1]
 			if ss.isformat2:
 				data = verif_contenue(data, decode=True, isformat2=ss.isformat2)
 			valeur_decodée = ss.convert(data, profondeur, variables=ss.variables, remplacement=ss.remplacement)
 
 		elif balise == '=':
-			valeur_decodée = TXTCRcalc(texte, ss.variables, ss.remplacement)
+			if texte[-1:] == ';' and texte[-2:] != '\\;': texte = texte[:-1]
+			valeur_decodée = TXTCRcalc(verif_contenue(texte, decode=True, isformat2=ss.isformat2), ss.variables, ss.remplacement, ss.decoder)
 
 		elif balise in ['+','-']:
 			texte = balise+texte
 			if ',' in texte: valeur_decodée = float(texte.replace(',', '.'))
 			elif '.' in texte: valeur_decodée = float(texte)
 			else: valeur_decodée = int(texte)
-					
-		elif balise.lower() in ["o", "ø"]:
-			valeur_decodée = None
 
 		else: raise erreurs.BaliseError(texte, balise, profondeur)
 

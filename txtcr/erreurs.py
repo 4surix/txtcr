@@ -10,7 +10,7 @@ class SeparationError(Exception):
 		ss.profondeur = profondeur
 
 	def __str__(ss):
-		return f'{ss.__doc__}, Valeur : |{ss.valeur}| || Retour : |{ss.retour}| || Profondeur : {ss.profondeur}'
+		return f'{ss.__doc__}, Valeur : |{ss.valeur}| Retour : |{ss.retour}| Profondeur : {ss.profondeur}'
 
 class BaliseError(Exception):
 	"""Balise inconue"""
@@ -21,7 +21,16 @@ class BaliseError(Exception):
 		ss.profondeur = profondeur
 
 	def __str__(ss):
-		return f"{ss.__doc__} || Balise : |{ss.balise}| || Profondeur : {ss.profondeur} || Valeur : |{ss.valeur}| "
+		return f"{ss.__doc__} || Balise : |{ss.balise}| Profondeur : {ss.profondeur} Valeur : |{ss.valeur}| "
+
+class BaliseBasiqueMauvaise(Exception):
+	"""Balise basique inconnue, vérifiez les balises basique"""
+
+	def __init__(ss, bb):
+		ss.balise_basique = bb
+
+	def __str__(ss):
+		return f'{ss.__doc__}, Balise basique éronée : {ss.balise_basique} | Valides : N#, D#, R#, M#, T#, H#, E#, I#'
 
 class FormatMauvais(Exception):
 	"""Mauvais Format, doit être TXTCR ou fichier"""
@@ -33,7 +42,7 @@ class FormatMauvais(Exception):
 		return f'{ss.__doc__}, Format : {ss.format}'
 
 class FormatInconnue(Exception):
-	"""Format inconnue, vérifiez la balise du début et celles qui suivent"""
+	"""Format inconnue, vérifiez la balise du début"""
 
 	def __init__(ss, f):
 		ss.format = f
@@ -60,3 +69,12 @@ class TypeInconnue(Exception):
 
 	def __str__(ss):
 		return f'{ss.__doc__}, Type : {ss.type} | Profondeur : {ss.profondeur} | Valeur : {ss.valeur}'
+
+class ModuleError(Exception):
+	"""Module introuvable, verifiez son nom !"""
+
+	def __init__(ss, module):
+		ss.module = module
+
+	def __str__(ss):
+		return f'{ss.__doc__}, Nom module : "{ss.module}"'

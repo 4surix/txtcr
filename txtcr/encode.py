@@ -31,7 +31,7 @@ class Encode:
 
 		vtype = type(valeur).__name__
 
-		if istype('dict', vtype=vtype):
+		if 'dict' == vtype:
 
 			keys = list(valeur.keys())
 			values = list(valeur.values())
@@ -70,8 +70,8 @@ class Encode:
 			texte = '{%s%s%s'%(simplification,
 							virg.join(keys_values),
 							fin)
-
-		elif istype('list', vtype=vtype):
+			
+		elif 'list' == vtype:
 			param = isuniforme(valeur)
 			getsymb = (1 if param and param != ';' else 0)
 
@@ -93,7 +93,7 @@ class Encode:
 							fin)
 
 
-		elif istype('tuple', vtype=vtype):
+		elif 'tuple' == vtype:
 			param = isuniforme(valeur)
 			getsymb = (1 if param and param != ';' else 0)
 
@@ -115,41 +115,39 @@ class Encode:
 							fin)
 
 
-		elif istype('str', vtype=vtype):
+		elif 'str' == vtype:
 			texte = '"%s'[getsymb:] % verif_contenue(valeur, isformat2=ss.isformat2)
 
-		elif istype('bytes', vtype=vtype):
+		elif 'bytes' == vtype:
 			texte = "'%s"[getsymb:] % valeur.decode()
 
-		elif istype(('int','float'), vtype=vtype):
+		elif vtype in ('int','float'):
 			texte = ('%s'%valeur if str(valeur)[0] == '-' else '+%s'%valeur)[getsymb:]
 
-		elif istype('NoneType', vtype=vtype):
+		elif 'NoneType' == vtype:
 			texte = 'o%s'[getsymb:] % valeur
 
-		elif istype('bool', vtype=vtype):
+		elif 'bool' == vtype:
 			if valeur == False:
 				texte = '0%s'[getsymb:] % valeur
 			elif valeur == True:
 				texte = '1%s'[getsymb:] % valeur
 
-		elif istype('TXTCRcalc', vtype=vtype):
-			texte = '=%s'%valeur.calcul
+		elif 'TXTCRcalc' == vtype:
+			texte = '=%s'% verif_contenue(valeur.calcul, isformat2=ss.isformat2)
 
-		elif istype('TXTCRstr', vtype=vtype):
+		elif 'TXTCRstr' == vtype:
 			texte = '"%s'[getsymb:]%valeur.text
 
-		elif istype('TXTCRcond', vtype=vtype):
-			texte = '>%s' % valeur.condition
+		elif 'TXTCRcond' == vtype:
+			texte = ':%s' % verif_contenue(valeur.condition, isformat2=ss.isformat2, addsep=False)
 
-		elif istype('TXTCRbool', vtype=vtype):
+		elif 'TXTCRbool' == vtype:
 			texte = '%s%s'%(1 if valeur.status else 0, valeur.commentaire)
 
 		elif is_class(valeur) and '__TXTCRvars__' in valeur.__class__.__dict__:
 			data = ss.convert(valeur, profondeur=profondeur)
-			if ss.isformat2:
-				data = verif_contenue(data, isformat2=ss.isformat2)
-			texte = '#%s' % data
+			texte = '<%s>' % data[3:]
 
 		else:
 			raise erreurs.TypeInconnue(type(valeur),profondeur,valeur)

@@ -10,15 +10,18 @@ balises =  ['{',
 			'(',
 			'"',
 			"'",
-			'+-',
-			'oø',
+			'+',
+			'-',
+			'O',
 			'0',
 			'1',
-			'>',
-			'#']
+			':',
+			'=',
+			'<']
 
 balises_en_tete =  {'N#':'name',
 					'D#':'desc',
+					'M#':'main',
 					'R#':'repr',
 					'B#':'base',
 					'T#':'date',
@@ -38,8 +41,8 @@ expregu =  [('\t', '\/t'),
 			('\r', '\/r'),
 			('\s', '\/s')]
 
-seps2 	 = [(':', '\: '[:-1]),
-			(';', '\; '[:-1])]
+seps2 	 = [(':', '\\:'),
+			(';', '\\;')]
 
 expregu2 = [('\t', '\\t'),
 			('\n', '\\n'),
@@ -48,12 +51,6 @@ expregu2 = [('\t', '\\t'),
 			('\b', '\\b'),
 			('\r', '\\r'),
 			('\s', '\\s')]
-
-def istype(ttype, valeur=None, *, vtype=False):
-	if not vtype: vtype = type(valeur).__name__
-
-	if vtype in ttype:
-		return True
 
 def isuniforme(valeurs):
 	bt = None
@@ -122,3 +119,17 @@ def verif_contenue(texte, *, decode=False, addsep=True, isformat2=True):
 		elif not decode and param in texte: texte = texte.replace(param, remplacement)
 
 	return texte
+
+#Type ---------------------------------------------
+def gettype(variable):
+	if isinstance(variable, (int, float)) and not isinstance(variable, bool):
+		if str(variable)[0] == '-':
+			return 'neg'
+		return 'pos'
+	return type(variable).__name__.replace('TXTCR', '')
+
+def istype(types, variable=None, *, vtype=None):
+	if not vtype: vtype = gettype(variable)
+	if vtype in types:
+		return True
+	return False

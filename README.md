@@ -11,28 +11,29 @@ Text Class Request
 - **`;`** Valeurs
 - **`:`** Key/Values in Dict  
 
-- **`[Sep]\`** Caractére d'échappement format 1
-- **`\[Sep]`** Caractére d'échappement format 2  
+- **`[symb]\`** Caractére d'échappement format 1
+- **`\[symb]`** Caractére d'échappement format 2  
 
 - **`;[0-9]+`** Balise basique format 1
 - **`|;|`** Balise basique format 2  
   
-_Ex format 1: `"Pouf ;\ pif :\ paf`_
+_Ex format 1: `"Pouf ;\ pif :\ paf`_  
 _Ex format 2: `"Pouf \; pif \: paf`_  
 
 ## Balises basique
 
 - **`N#`** Name
+- **`M#`** Main 
 - **`D#`** Description
 - **`R#`** Affichage
 - **`T#`** Time/Date
-- **`B#`** Variable de Base
+- **`B#`** Valeurs de Base des variables
 - **`E#`** Encodage
 - **`H#`** Hash
 - **`I#`** Info/Contenue  
 
-_Ex format 1: `|;|N#Pouf`_
-_Ex format 2: `;0N#Pouf`_  
+_Ex format 1: `;0N#Pouf`_  
+_Ex format 2: `|;|N#Pouf`_  
 
 ## Balises
 
@@ -44,11 +45,12 @@ _Ex format 2: `;0N#Pouf`_
 - **`=`** Calc
 - **`+`** Int/Float Positif
 - **`-`** Int/Float Negatif
-- **`o`** None
+- **`O`** None
 - **`0`** False
 - **`1`** True
-- **`>`** Func
-- **`#`** Class  
+- **`:`** Condition
+- **`>`** Class
+- **`/`** Commentaire  
 
 ### Balise fermante (seulement format 2)
 
@@ -56,5 +58,5 @@ _Ex format 2: `;0N#Pouf`_
 - **`]`** List
 - **`)`** Tuple  
 
-_Ex format 1: `{"wouf:1"pouet`_
+_Ex format 1: `{"wouf:1"pouet`_  
 _Ex format 2: `{"wouf:"pouet}`_

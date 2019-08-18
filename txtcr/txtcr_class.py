@@ -8,15 +8,15 @@ from .utile import *
 def new(ss, nbr, **params):
 
 	def base_to_dict(decodage, txt_base):
-		return {c:decodage(v, 0) for c,v in [p.split('= ') for p in txt_base.split('; ') if p]}
+		return {c.strip():decodage(v.strip(), 0) for c,v in [p.split('=') for p in txt_base.split(';') if p]}
 	
-	decode = Decode(ss.isformat2, ss.variables, ss.remplacement)
+	#decode = Decode(ss.isformat2, ss.variables, ss.remplacement)
 	pc = params.get('parentclass', Clss)
 
 	class Class(pc):
 
 		__encodage__ = convert.ClassVersTexte(ss.isformat2)
-		__decode__ = decode
+		__decode__ = ss.decoder
 		__encode__ = Encode(ss.isformat2)
 
 		__defaut__ = ss.remplacement
@@ -42,7 +42,7 @@ def new(ss, nbr, **params):
 
 			elif isinstance(valeur, str):
 
-				if istype('TXTCRcond', valeur_de_item) and valeur[0] == '>':
+				if istype('TXTCRcond', valeur_de_item) and valeur[0] == ':':
 					valeur_de_item.condition = valeur[1:]
 					return
 
@@ -173,7 +173,7 @@ def new(ss, nbr, **params):
 		def __repr__(ss):
 			clss = ss.__class__
 			if not clss.__TXTCRrepr__:
-				return '<Not R#>'
+				return '<%s: R# is not defined>'%clss.__name__
 			return str(ss.__TXTCRrepr__).format(
 					N=clss.__name__,
 					D=clss.__doc__,
@@ -184,7 +184,7 @@ def new(ss, nbr, **params):
 										)
 
 	remplacement = params.get('base', '')
-	ss.remplacement.append(base_to_dict(decode, remplacement))
+	ss.remplacement.append(base_to_dict(ss.decoder, remplacement))
 
 	newclass = Class()
 	newclass.__class__.__name__				= params.get('name', '')
@@ -193,12 +193,13 @@ def new(ss, nbr, **params):
 	newclass.__class__.__TXTCRencd__		= params.get('encd')
 	newclass.__class__.__TXTCRhash__		= params.get('hash')
 	newclass.__class__.__TXTCRrepr__		= params.get('repr')
+	newclass.__class__.__TXTCRmain__		= params.get('main')
 	newclass.__class__.__TXTCRbase__		= remplacement
 	newclass.__class__.__TXTCRtmps__		= []
-	newclass.__class__.__TXTCRvars__		= ss.variables
+	newclass.__class__.__TXTCRvars__		= []
 
-	ss.variables.append(newclass.__dict__)
-	for key, value in decode(params.get('info', '{'), nbr).items():
+	for key, value in ss.decoder(params.get('info', '{'), nbr).items():
 		newclass.__dict__[key] = value
-
+	ss.variables.append(newclass.__dict__)
+	
 	return newclass

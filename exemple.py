@@ -58,34 +58,62 @@ exemple = txtcr.decode("""|;#
 
 print(exemple.exemple['Texte_in_liste'][1])
 
-#Conditions -----------------------------
-exemple = txtcr.decode("""|;#
-|;|N#Condition
+#Mode programme --------------------------
+exemple = txtcr.decode("""
+|;#
+|;|M#début
 |;|I#{
-	+0: -12.5;
-	-12.5: 'armoire;
-	"nbr: +0;
-	"exemple:
-	> ###nbr### = #value# = 1 C'est égal à value & (+1 in [+2] | (+3.5 > +1 & -4 < +2))
+"début: "Hello World !
 }
 """)
 
-def aff(value, **ops): 
-	print("C'est égal à %s"%(value))
+print('Resulta :', txtcr.main(exemple))
 
-exemple.exemple.action_if(true=aff, false=lambda **ops: print('Oups !'))
-exemple.exemple(value=b'armoire')
-
-#Types ----------------------------------
-exemple = txtcr.decode("""|;#
-|;|N#Types
+#Commentaires --------------------------
+#Plasable seulement dans un dict comme un key
+exemple = txtcr.decode("""
+|;#
+|;|I#{
+/"Commentaire;
+"début: "Le truc plus haut est un commentaire;
+/"Je suis aussi un commentaire !;
+}
 """)
 
-txtcr.cond(exemple, if_modo='#id# in #modos#')
-txtcr.bool(exemple, pouet=False) #Pas très utile, cela revient à faire exemple.pouet = True, 
-								#mais possibilité de mettre un commentaire par la suite avec exemple.pouet.comm('Commentaire')
-txtcr.bool(exemple, arbre=(False, "Ce n'est pas un arbre"))
+print('Resulta :', txtcr.main(exemple))
 
-exemple.pouet = True
-exemple.if_modo = '> #id# in #ids_modos#'
-print(exemple.encode())
+#Condition -------------------------------
+exemple = txtcr.decode("""
+|;#
+|;|M#début
+|;|I#{
+"lettre: "a;
+"mot: "arbre;
+"début: :
+#lettre# inn #mot#
+>if1
+	>aff> "\"#lettre#\" est dans #mot# !"
+>if0
+	>aff> "\"#lettre#\" n'est pas dans #mot# !"
+:
+}
+""")
+
+print('Resulta :', txtcr.main(exemple))
+
+#Importation de modules ------------------
+exemple = txtcr.decode("""
+|;#
+|;|M#début
+|;|I#{
+"utile: <#utile#>;
+"pouet: <#math#>;
+"début: :1
+>if1
+	>get> split(texte="test - armoire - pouet",sep="-")
+	>get> fact(nbr=+5)
+:
+}
+""")
+
+print('Resulta :', txtcr.main(exemple))

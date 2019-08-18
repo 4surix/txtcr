@@ -1,8 +1,16 @@
 # -*- coding: utf-8 -*-
 
 from .utile import *
+
+try:
+	from .programmation.utile import *
+	func_module = True
+except ImportError:
+	func_module = False
+
 from . import erreurs
 from . import txtcr_class
+
 from .encode import Encode
 from .decode import Decode
 
@@ -28,8 +36,9 @@ class ClassVersTexte(Encode):
 
 			return (ops.get('nom', clss.__name__),
 					ops.get('desc', clss.__doc__),
+					ops.get('main', clss.__dict__.get('__TXTCRmain__')),
 					ops.get('repr', clss.__dict__.get('__TXTCRrepr__')),
-					ops.get('repr', clss.__dict__.get('__TXTCRbase__')),
+					ops.get('base', clss.__dict__.get('__TXTCRbase__')),
 					ops.get('date', clss.__dict__.get('__TXTCRdate__')),
 					ops.get('hash', clss.__dict__.get('__TXTCRhash__')),
 					ops.get('encodage', clss.__dict__.get('__TXTCRencd__')),
@@ -45,6 +54,7 @@ class ClassVersTexte(Encode):
 
 			return (ops.get('nom', verif(data, '__name__')),
 					ops.get('desc', verif(data, '__desc__')),
+					ops.get('main', verif(data, '__main__')),
 					ops.get('repr', verif(data, '__repr__')),
 					ops.get('base', verif(data, '__base__')),
 					ops.get('date', verif(data, '__date__')),
@@ -118,10 +128,24 @@ class TexteVersClass(Decode):
 		else:
 			sep = ";%s"%nbr
 
-		for d in data.split(sep):
-			if not d: continue
-			balise = balises_en_tete[d[:2]]
-			params[balise] = d[2:] if balise == 'info' else verif_contenue(d[2:], decode=True, addsep=False, isformat2=ss.isformat2)
+		if data[0] == '#':
+			module = data[1:-1]
+			if func_module and module in get_modules():
+				data = get_data_module(module, sep).replace('\n', '').replace('\t', '')
+			else:
+				raise erreurs.ModuleError(module)
+
+		catégories = data.split(sep)
+		for i, cat in enumerate(catégories):
+			if not cat: continue
+			balise = balises_en_tete.get(cat[:2])
+			if not balise:
+				raise erreurs.BaliseBasiqueMauvaise(cat[:2])
+			if balise == 'info':
+				params[balise] = cat[2:] + sep.join(catégories[i+1:])
+				break
+			else:
+				params[balise] = verif_contenue(cat[2:], decode=True, addsep=False, isformat2=ss.isformat2)
 
 		return txtcr_class.new(ss, nbr, **params)
 
