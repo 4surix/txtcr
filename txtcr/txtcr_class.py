@@ -10,7 +10,6 @@ def new(ss, nbr, **params):
 	def base_to_dict(decodage, txt_base):
 		return {c.strip():decodage(v.strip(), 0) for c,v in [p.split('=') for p in txt_base.split(';') if p]}
 	
-	#decode = Decode(ss.isformat2, ss.variables, ss.remplacement)
 	pc = params.get('parentclass', Clss)
 
 	class Class(pc):
@@ -19,7 +18,7 @@ def new(ss, nbr, **params):
 		__decode__ = ss.decoder
 		__encode__ = Encode(ss.isformat2)
 
-		__defaut__ = ss.remplacement
+		__defaut__ = ss.defauts
 
 		def __setitem__(ss, item, valeur):
 			ss.__dict__[item] = valeur
@@ -79,7 +78,7 @@ def new(ss, nbr, **params):
 				('H', 'hash')	: css.__TXTCRhash__,
 				('E', 'encd')	: css.__TXTCRencd__,
 				('B', 'base')	: base.get(key, defaut) if key else base,
-				('I', 'info')	: (ss.__dict__.get(key, defaut) if key else {c:v for c,v in ss.__dict__.items()})
+				('I', 'info')	: (ss.__dict__.get(key, defaut) if key else ss.__dict__)
 			}.items() if balise in c] + [False])[0]
 
 			if valeur is None:
@@ -183,23 +182,31 @@ def new(ss, nbr, **params):
 					I=ss
 										)
 
-	remplacement = params.get('base', '')
-	ss.remplacement.append(base_to_dict(ss.decoder, remplacement))
+	defauts = params.get('base', '')
+	ss.defauts.append(base_to_dict(ss.decoder, defauts))
 
 	newclass = Class()
+
+	ss.clss = newclass
+
+	for key, value in ss.decoder(params.get('info', '{'), nbr).items():
+			newclass.__dict__[key] = value
+
+	ss.variables.insert(0, newclass.__dict__)
+
+	#Info class
 	newclass.__class__.__name__				= params.get('name', '')
 	newclass.__class__.__doc__				= params.get('desc')
+	newclass.__class__.__TXTCRrepr__		= params.get('repr')
+	#Utile
 	newclass.__class__.__TXTCRdate__		= params.get('date')
 	newclass.__class__.__TXTCRencd__		= params.get('encd')
 	newclass.__class__.__TXTCRhash__		= params.get('hash')
-	newclass.__class__.__TXTCRrepr__		= params.get('repr')
+	#Prog
 	newclass.__class__.__TXTCRmain__		= params.get('main')
-	newclass.__class__.__TXTCRbase__		= remplacement
+	#Variables
+	newclass.__class__.__TXTCRbase__		= defauts
 	newclass.__class__.__TXTCRtmps__		= []
-	newclass.__class__.__TXTCRvars__		= []
-
-	for key, value in ss.decoder(params.get('info', '{'), nbr).items():
-		newclass.__dict__[key] = value
-	ss.variables.append(newclass.__dict__)
+	newclass.__class__.__TXTCRvars__		= ss.variables
 	
 	return newclass

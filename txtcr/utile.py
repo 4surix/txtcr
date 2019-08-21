@@ -52,32 +52,45 @@ expregu2 = [('\t', '\\t'),
 			('\r', '\\r'),
 			('\s', '\\s')]
 
+#Type ---------------------------------------------
+def gettype(variable):
+	if isinstance(variable, (int, float)) and not isinstance(variable, bool):
+		if str(variable)[0] == '-':
+			return 'neg'
+		return 'pos'
+	return type(variable).__name__.replace('TXTCR', '')
+
+def istype(types, variable=None, *, vtype=None):
+	if not vtype: vtype = gettype(variable)
+	if vtype in types:
+		return True
+	return False
+
 def isuniforme(valeurs):
 	bt = None
 	meme_type = True
 
-	for i in valeurs:
-		t = type(i).__name__.replace('TXTCR', '')
+	for valeur in valeurs:
+		vtype = gettype(valeur)
 
-		if t == 'str':
-			t = '"'
-		elif t == 'bytes':
-			t = "'"
-		elif t == 'bool':
-			if i == False:
-				t = "0"
-			elif i == True:
-				t = '1'
-		elif t in ['int','float']:
-			if '-' == str(i)[0]:
-				t = '-'
-			else:
-				t = '+'
+		if vtype == 'str':
+			balise = '"'
+		elif vtype == 'bytes':
+			balise = "'"
+		elif vtype == 'bool':
+			if valeur == False:
+				balise = "0"
+			elif valeur == True:
+				balise = '1'
+		elif vtype == 'neg':
+			balise = '-'
+		elif vtype == 'pos':
+			balise = '+'
 		else:
 			return None
 
-		if not bt: bt = t
-		elif bt != t: meme_type = False
+		if not bt: bt = balise
+		elif bt != balise: meme_type = False
 
 	return (bt if meme_type else ';')
 
@@ -119,17 +132,3 @@ def verif_contenue(texte, *, decode=False, addsep=True, isformat2=True):
 		elif not decode and param in texte: texte = texte.replace(param, remplacement)
 
 	return texte
-
-#Type ---------------------------------------------
-def gettype(variable):
-	if isinstance(variable, (int, float)) and not isinstance(variable, bool):
-		if str(variable)[0] == '-':
-			return 'neg'
-		return 'pos'
-	return type(variable).__name__.replace('TXTCR', '')
-
-def istype(types, variable=None, *, vtype=None):
-	if not vtype: vtype = gettype(variable)
-	if vtype in types:
-		return True
-	return False

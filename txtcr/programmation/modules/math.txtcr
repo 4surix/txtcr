@@ -1,7 +1,7 @@
 |;#
 |;|N#Math
 |;|R#Math
-|;|B#nbr1=+0;nbr2=+1;pouet="pouf
+|;|B#nbr1=+0;nbr2=+1
 |;|I#{
 /	"Calculez une factorielle d'un nombre
 	fact(nbr=nbr) -> nbr;
@@ -14,22 +14,24 @@
 		>get> _calcul_fac(nbr, _multiple, _resulta)
 		>del> _multiple
 		>del> _resulta
-		>del> nbr
 	>if0
 		>get> O
 :;
 "_multiplication: =#_resulta#*#_multiple#;
 "_calcul_fac:
 :
-#nbr# > #_multiple#
+nbr > _multiple
 >if1
 	>add> _resulta + _multiplication(_resulta, _multiple)
 	>add> _multiple + +1
-	>get> _calcul_fac(_resulta, nbr)
+	>get> _calcul_fac(_resulta, _multiple, nbr)
 >if0
 	>get> _resulta
 :
 ;
+/	"Calculez la suite de Fibonacci d'un nombre
+	fibo(nbr1=nbr,nbr2=nbr,limite=nbr) -> nbr
+	Par défaut : nbr1 = +0, nbr2 = +1;
 "fibo:
 :
 1

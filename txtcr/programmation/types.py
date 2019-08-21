@@ -3,6 +3,29 @@
 from .conditions import *
 from .calculs import *
 
+def get_vars(clss, parametres):
+	#Get variables globals
+	vars_globals = clss.get('variables')
+	#Mise en avant des variables locals
+	vars_locals = clss.get('I')
+	if vars_globals.index(vars_locals) != 0:
+		vars_globals.remove(vars_locals)
+		vars_globals.insert(0, vars_locals)
+	#Set variables à retourner
+	variables = vars_globals[:]
+	#Variables objet
+	variables.insert(0, {})
+	for variable, value in parametres.items(): 
+		existe = False
+		for Tvars in variables:
+			if variable in Tvars:
+				Tvars[variable] = value
+				existe = True
+		if not existe:
+			variables[0][variable] = value
+	#Retourne Variable objet, local, global
+	return variables
+
 class TXTCRbool:
 	def __init__(ss, status, commentaire=''):
 		ss.status = status
@@ -10,8 +33,8 @@ class TXTCRbool:
 	def __eq__(ss, status): return ss.status == status
 	def __ne__(ss, status): return not ss.status == status
 	def __bool__(ss): return ss.status
-	def __repr__(ss): return ss.status
-	def __str__(ss): return '%s%s'%(1 if ss.status else 0, ss.commentaire)
+	def __str__(ss): return '%s%s'%(1 if ss.status else 0, ' #%s'%ss.commentaire if ss.commentaire else '')
+	def __repr__(ss): return '%s'%ss.status
 	def comm(commentaire):
 		ss.commentaire = commentaire
 
@@ -22,28 +45,26 @@ class TXTCRstr(str):
 	def __repr__(ss): return str(ss.verif())
 	def __call__(ss, *cle, **ops): return ss.verif(*cle, **ops)
 	def verif(ss, *cle, **ops):
-		variables = ss._variables[:]
-		variables.append({})
-		for k,v in ops.items(): variables[-1][k] = v
-		return replace_variables(ss.text, variables, ss._remplacement, ss._decode)
+		variables = get_vars(ss._clss, ops)
+		return convert_variable(ss.text, variables, ss._clss.get('defauts'), ss._decode, exclues=balises+['#'], leve_erreur=False)
 
 class TXTCRcalc:
-	def __init__(ss, calcul, variables, remplacement, decode):
-		ss._remplacement = remplacement
-		ss._variables = variables
+	def __init__(ss, calcul, clss, decode):
+		ss._clss = clss
 		ss.calcul = calcul
-		ss.decode = decode
-	def __str__(ss): return 'None' #str(ss.verif())
-	def __repr__(ss): return 'None' #ss.verif()
+		ss._decode = decode
+	def __str__(ss): return str(ss.verif())
+	def __repr__(ss): return '%s'%ss.verif()
 	def __call__(ss, *cle, **ops): return ss.verif(*cle, **ops)
 	def verif(ss, *cle, **ops):
-		for k,v in ops.items(): ss._variables[0][k] = v
-		return calc.getnbr(calc.parentheses(replace_variables(ss.calcul, ss._variables, ss._remplacement, ss.decode)))[0]
+		variables = get_vars(ss._clss, ops)
+		return calc.getnbr(
+					calc.parentheses(
+							convert_variable(ss.calcul, variables, ss._clss.get('defauts'), ss._decode, exclues=balises+['#'], leve_erreur=False)))[0]
 
 class TXTCRcond:
-	def __init__(ss, condition, variables, remplacement, decode):
-		ss._remplacement = remplacement
-		ss._variables = variables
+	def __init__(ss, condition, clss, decode):
+		ss._clss = clss
 		ss._decode = decode
 		ss.condition = condition
 
@@ -62,11 +83,9 @@ class TXTCRcond:
 		ss.condition = nouv_condition
 
 	def verif(ss, *cle, **ops):
-		variables = ss._variables[:]
-		variables.append({})
-		for k,v in ops.items(): variables[-1][k] = v
+		variables = get_vars(ss._clss, ops)
 
-		deffonc = DefCondition({}, variables, ss._remplacement, ss._decode)
+		deffonc = DefCondition({}, variables, ss._clss.get('defauts'), ss._decode)
 		resulta = deffonc.recup_condition_acts(ss.condition).analyse()
 		deffonc = None
 

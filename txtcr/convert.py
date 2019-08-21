@@ -110,7 +110,7 @@ class TexteVersClass(Decode):
 
 	def __init__(ss, isformat2):
 		ss.variables = []
-		ss.remplacement = []
+		ss.defauts = []
 		ss.isformat2 = isformat2
 
 	def __call__(ss, *cle, **ops):

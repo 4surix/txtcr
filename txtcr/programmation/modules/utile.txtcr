@@ -1,20 +1,17 @@
 |;#
 |;|N#Utilitaire
 |;|I#{
-/	"Function pour savoir si une variable est un/des type(s) 
-	istype(value=value, types=tuple de type) -> bool;
+/	"Fonction pour savoir si une variable est un/des type(s) 
+	istype(var=variable, types=tuple de type) -> bool;
 "istype:
 :
 	1
 	>if1
-		>typ> type = object
+		>typ> type = var
 		>get> _type_in_types(type, types)
 :;
 "_type_in_types: :type inn types:
 ;
-"_mot: ";
-"_place: +0;
-"_texte_couper: [];
 /	"Mini split avec sep à 1 caratére
 	split(texte=str,sep=str) -> list de str;
 "split:
@@ -22,10 +19,14 @@
 	1
 	>if1
 		>set> _mot = ""
+		>len> nbr_carac = texte
 		>set> _place = +0
 		>set> _texte_couper = []
-		>get> _split_texte(texte, sep)
+		>get> _split_texte(texte, nbr_carac, sep)
 :;
+"_mot: ";
+"_place: +0;
+"_texte_couper: [];
 "_if_sep:
 :
 	sep == #texte|_place#
@@ -37,11 +38,11 @@
 :;
 "_split_texte: 
 :
-	#_place# !== #texte#
+	#_place# !== #nbr_carac#
 	>if1
 		>get> _if_sep(texte, sep)
 		>add> _place + +1
-		>get> _split_texte(texte, sep)
+		>get> _split_texte(texte, nbr_carac, sep)
 	>if0
 		>add> _texte_couper + _mot
 		>get> _texte_couper

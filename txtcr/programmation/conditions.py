@@ -9,7 +9,7 @@ from .fonc_type import *
 #Action ----------------------------------------------------------------------
 def _set(TXTCRvars, TXTCRtmps, defauts, decode, value): 
 	item, *value = value.split(' = ')
-	item = convert_variable(item, TXTCRvars, defauts, decode, convert_redirection=False)
+	item = convert_variable(item, TXTCRvars, defauts, decode, exclues=['redirection'])
 	if value:
 		value = convert_variable(' = '.join(value), TXTCRvars, defauts, decode)
 
@@ -20,7 +20,7 @@ def _set(TXTCRvars, TXTCRtmps, defauts, decode, value):
 				is_modifier = True
 
 		if not is_modifier:
-			TXTCRvars[-1][item] = value 
+			TXTCRvars[0][item] = value 
 
 def _add(TXTCRvars, TXTCRtmps, defauts, decode, value):
 	item, *value = value.split(' + ')
@@ -30,7 +30,7 @@ def _add(TXTCRvars, TXTCRtmps, defauts, decode, value):
 		for Tvars in TXTCRvars:
 			if item in Tvars: return
 		resulta = recup_default(defauts).get(item)
-		if resulta: TXTCRvars[-1][item] = resulta
+		if resulta: TXTCRvars[0][item] = resulta
 	verif_existe()
 
 	if value:
@@ -49,7 +49,7 @@ def _add(TXTCRvars, TXTCRtmps, defauts, decode, value):
 
 def _del(TXTCRvars, TXTCRtmps, defauts, decode, value):
 	item, *value = value.split(' - ')
-	item = convert_variable(item, TXTCRvars, defauts, decode, convert_redirection=False)
+	item = convert_variable(item, TXTCRvars, defauts, decode, exclues=['redirection'])
 	if value: 
 		value = convert_variable(' - '.join(value), TXTCRvars, defauts, decode)
 		for Tvars in TXTCRvars:
@@ -64,15 +64,17 @@ def _del(TXTCRvars, TXTCRtmps, defauts, decode, value):
 					Tvars[item] = Tvars[item] - (value,)
 				elif isinstance(Tvars[item], str):
 					Tvars[item].replace(value, '')
+				break
 	else:
 		for Tvars in TXTCRvars:
 			if item in Tvars:
 				del Tvars[item]
+				break
 
 def _ped(TXTCRvars, TXTCRtmps, defauts, decode, value):
 	item, *texte = value.split(' ? ')
 	texte = input(' ? '.join(texte))
-	item = convert_variable(item, TXTCRvars, defauts, decode, convert_redirection=False)
+	item = convert_variable(item, TXTCRvars, defauts, decode, exclues=['redirection'])
 	TXTCRvars[-1][item] = decode(texte)
 
 def _get(TXTCRvars, TXTCRtmps, defauts, decode, value):
@@ -81,45 +83,42 @@ def _get(TXTCRvars, TXTCRtmps, defauts, decode, value):
 def _aff(TXTCRvars, TXTCRtmps, defauts, decode, value):
 	if value[0] == '"' and value[-1] == '"':
 		value = value[1:-1]
-	print(replace_variables(value, TXTCRvars, defauts, decode))
+	print(convert_variable(value, TXTCRvars, defauts, decode, exclues=balises+['#'], leve_erreur=False))
 
 def _typ(TXTCRvars, TXTCRtmps, defauts, decode, value):
 	*item, variable = value.split(' = ')
 	variable = convert_variable(variable, TXTCRvars, defauts, decode)
-	vtype = gettype(variable)
+	type_value = gettype(variable)
 	if not item:
-		return vtype
+		return type_value
 	else:
-		TXTCRvars[-1][decode(' = '.join(item))] = vtype
+		item = convert_variable(' = '.join(item), TXTCRvars, defauts, decode, exclues=['redirection'])
+		TXTCRvars[0][item] = type_value
+
+def _len(TXTCRvars, TXTCRtmps, defauts, decode, value):
+	*item, variable = value.split(' = ')
+	variable = convert_variable(variable, TXTCRvars, defauts, decode, exclues=balises)
+	nbr_element = len(variable)
+	if not item:
+		return nbr_element
+	else:
+		item = convert_variable(' = '.join(item), TXTCRvars, defauts, decode, exclues=['redirection'])
+		TXTCRvars[0][item] = nbr_element
 
 func_actions = {
 	#Modification de variable
-	'set': lambda **ops: _set(**ops),
-	'get': lambda **ops: _get(**ops),
+	'set': _set,
+	'get': _get,
 	#Intéraction avec l'utiisateur
-	'aff': lambda **ops: _aff(**ops),
-	'ped': lambda **ops: _ped(**ops),
+	'aff': _aff,
+	'ped': _ped,
 	#Ajout/suppresion
-	'add': lambda **ops: _add(**ops),
-	'del': lambda **ops: _del(**ops),
-	#Utilisataire
-	'typ': lambda **ops: _typ(**ops)
+	'add': _add,
+	'del': _del,
+	#Utilitaire
+	'typ': _typ,
+	'len': _len
 }
-
-def _len_comparaison(var1, symb, var2):
-
-	if isinstance(var1, (int, float)):
-		if isinstance(var2, (str, bytes, tuple, list, dict)):
-			return eval('%s %s %s'%(var1, symb, len(var2)))
-	if isinstance(var1, (str, bytes, tuple, list, dict)):
-		if isinstance(var2, (int, float)):
-			return eval('%s %s %s'%(len(var1), symb, var2))
-
-	if symb == '>': return var1 > var2
-	if symb == '>=': return var1 >= var2
-	if symb == '<': return var1 < var2
-	if symb == '<=': return var1 <= var2
-	if symb == '==': return var1 == var2
 
 def _verif_type(variable):
 	if isinstance(variable, (int, float)) and not isinstance(variable, bool):
@@ -147,12 +146,12 @@ def _objet_in(var1, var2):
 	return False
 
 func_conditions = {
-	'>': lambda var1, var2: _len_comparaison(var1, '>', var2),
-	'=>': lambda var1, var2: _len_comparaison(var1, '>=', var2),
-	'<': lambda var1, var2: _len_comparaison(var1, '<', var2),
-	'<=': lambda var1, var2: _len_comparaison(var1, '<=', var2),
+	'>': lambda var1, var2: var1 > var2,
+	'=>': lambda var1, var2: var1 >= var2,
+	'<': lambda var1, var2: var1 < var2,
+	'<=': lambda var1, var2: var1 <= var2,
 	'=': lambda var1, var2: _verif_type(var1) == _verif_type(var2),
-	'==': lambda var1, var2: _len_comparaison(var1, '==', var2),
+	'==': lambda var1, var2:  var1 == var2,
 	'===': lambda var1, var2: var1 is var2,
 	'in': lambda var1, var2: _type_in(var1, var2),
 	'inn': lambda var1, var2: var1 in var2,

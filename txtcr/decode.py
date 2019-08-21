@@ -108,9 +108,7 @@ def separer_dict_format2(texte, _):
 	for nbr, carac in enumerate(texte):
 
 		if enregistrement:
-			if carac == " ":
-				continue
-			key_value.append(texte[nbr:])
+			key_value.append(texte[nbr:].strip())
 			break
 
 		if carac == "\\":
@@ -119,7 +117,7 @@ def separer_dict_format2(texte, _):
 
 		if not echapement and carac == ':':
 			enregistrement = True
-			key_value.append(texte[0:nbr])
+			key_value.append(texte[0:nbr].strip())
 
 		echapement = False
 
@@ -130,10 +128,10 @@ def separer_dict_format1(texte, sep):
 
 class Decode:
 
-	def __init__(ss, isformat2, variables, remplacement):
+	def __init__(ss, isformat2, variables, defauts):
 		ss.isformat2 = isformat2
 		ss.variables = variables
-		ss.remplacement = remplacement
+		ss.defauts = defauts
 
 	def __call__(ss, *cle):
 		return ss.decoder(*cle)
@@ -193,17 +191,16 @@ class Decode:
 			valeur_decodée = tuple([ss.decoder(balise+v, profondeur) for v in values if v])
 
 		elif balise == '"':
-			if texte[-1:] == '"' and texte[-2:] != '\\"': texte = texte[:-1]
+			if len(texte) >= 2 and texte[-2] != '\\' and texte[-1] in ['"',';'] : texte = texte[:-1]
 			valeur_decodée = verif_contenue(texte, decode=True, isformat2=ss.isformat2)
 
 			if valeur_decodée.count('#') >= 2:
 				valeur_decodée = TXTCRstr(valeur_decodée)
-				valeur_decodée._variables = ss.variables
-				valeur_decodée._remplacement = ss.remplacement
+				valeur_decodée._clss = ss.clss
 				valeur_decodée._decode = ss.decoder
 
 		elif balise == "'":
-			if texte[-1:] == "'" and texte[-2:] != "\\'": texte = texte[:-1]
+			if len(texte) >= 2 and texte[-2] != '\\' and texte[-1] in ['"',';'] : texte = texte[:-1]
 			valeur_decodée = texte.encode()
 
 		elif balise == "O":
@@ -216,17 +213,20 @@ class Decode:
 			valeur_decodée = TXTCRbool(True, texte)
 
 		elif balise == ':':
-			valeur_decodée = TXTCRcond(verif_contenue(texte, decode=True, addsep=False, isformat2=ss.isformat2), ss.variables, ss.remplacement, ss.decoder)
+			valeur_decodée = TXTCRcond(verif_contenue(texte, decode=True, addsep=False, isformat2=ss.isformat2), ss.clss, ss.decoder)
+
+		elif balise == '=':
+			if len(texte) >= 2 and texte[-2] != '\\' and texte[-1] == ';': texte = texte[:-1]
+			valeur_decodée = TXTCRcalc(verif_contenue(texte, decode=True, isformat2=ss.isformat2), ss.clss, ss.decoder)
 
 		elif balise == '<':
 			data = texte[:-1]
 			if ss.isformat2:
 				data = verif_contenue(data, decode=True, isformat2=ss.isformat2)
-			valeur_decodée = ss.convert(data, profondeur, variables=ss.variables, remplacement=ss.remplacement)
-
-		elif balise == '=':
-			if texte[-1:] == ';' and texte[-2:] != '\\;': texte = texte[:-1]
-			valeur_decodée = TXTCRcalc(verif_contenue(texte, decode=True, isformat2=ss.isformat2), ss.variables, ss.remplacement, ss.decoder)
+				
+			ancien_clss = ss.clss
+			valeur_decodée = ss.convert(data, profondeur)
+			ss.clss = ancien_clss
 
 		elif balise in ['+','-']:
 			texte = balise+texte

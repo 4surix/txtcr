@@ -1,8 +1,9 @@
 |;#
 |;|N#Comptage
-|;|B#aff=1;nbr=+1
+|;|B#nbr=+1
 |;|I#{
-"aff_nbr:
+"aff: 1;
+"_aff_nbr:
 :
 #aff# == 1
 	>if1
@@ -13,7 +14,7 @@
 "compte_jusque:
 :
 nbr < limite
->if1>get>aff_nbr(nbr)
+>if1>get>_aff_nbr(nbr)
 	>add>nbr + +1
 	>get>compte_jusque(nbr, limite)
 >if0>get> nbr

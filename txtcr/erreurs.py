@@ -78,3 +78,12 @@ class ModuleError(Exception):
 
 	def __str__(ss):
 		return f'{ss.__doc__}, Nom module : "{ss.module}"'
+
+class VariableError(Exception):
+	"""Variable introuvable, verifiez son nom ou si elle est bien définie !"""
+
+	def __init__(ss, variable):
+		ss.variable = variable
+
+	def __str__(ss):
+		return f'{ss.__doc__}, Nom variable : "{ss.variable}"'

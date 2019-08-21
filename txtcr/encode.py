@@ -125,7 +125,7 @@ class Encode:
 			texte = ('%s'%valeur if str(valeur)[0] == '-' else '+%s'%valeur)[getsymb:]
 
 		elif 'NoneType' == vtype:
-			texte = 'o%s'[getsymb:] % valeur
+			texte = 'O%s'[getsymb:] % valeur
 
 		elif 'bool' == vtype:
 			if valeur == False:

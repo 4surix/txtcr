@@ -37,22 +37,19 @@ class types:
 	def calc(clss, **ops):
 		item, value = tuple(ops.items())[0]
 		clss[item] = types.TXTCRcalc(calcul,  
-									clss.get('variables'),
-									clss.get('defauts'),
+									clss,
 									clss.__decode__)
 
 	def cond(clss, **ops):
 		item, value = tuple(ops.items())[0]
 		clss[item] = types.TXTCRcond(value,  
-									clss.get('variables'),
-									clss.get('defauts'),
+									clss,
 									clss.__decode__)
 
 	def str(clss, **ops):
 		item, value = tuple(ops.items())[0]
 		TXTCRstr = types.TXTCRstr(value)
-		TXTCRstr._variables = clss.get('variables')
-		TXTCRstr._remplacement = clss.get('defauts')
+		TXTCRstr._clss = clss
 		TXTCRstr._decode = clss.__decode__
 		clss[item] = TXTCRstr
 
@@ -76,7 +73,7 @@ def main(clss, **ops):
 		return "<#M is not defined>"
 
 #Modules -------------------------------------------
-chemin_modules = os.getcwd() + '/txtcr/programmation/modules'
+chemin_modules = 'txtcr/programmation/modules'
 os.makedirs(chemin_modules, exist_ok=True)
 def get_modules():
 	return [m.split('.')[0] for m in os.listdir(chemin_modules)]

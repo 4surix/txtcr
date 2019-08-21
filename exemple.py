@@ -85,6 +85,7 @@ print('Resulta :', txtcr.main(exemple))
 #Condition -------------------------------
 exemple = txtcr.decode("""
 |;#
+|;|N#Condition
 |;|M#début
 |;|I#{
 "lettre: "a;
@@ -104,14 +105,38 @@ print('Resulta :', txtcr.main(exemple))
 #Importation de modules ------------------
 exemple = txtcr.decode("""
 |;#
+|;|N#Importation
 |;|M#début
 |;|I#{
 "utile: <#utile#>;
 "pouet: <#math#>;
 "début: :1
 >if1
+	>get> istype(var="test",types=("str"))
 	>get> split(texte="test - armoire - pouet",sep="-")
 	>get> fact(nbr=+5)
+	>get> fibo(limite=+10)
+:
+}
+""")
+
+print('Resulta :', txtcr.main(exemple))
+
+#Importation de modules ------------------
+exemple = txtcr.decode("""
+|;#
+|;|M#début
+|;|I#{
+"math: <#math#>;
+"nbr: +0;
+"début: :
+nbr < +100
+>if1
+    >aff> "fibo(#nbr#) = #fibo(limite=nbr)#"
+    >add> nbr + +20
+    >get> début(nbr)
+>if0
+    >aff> "Fin"
 :
 }
 """)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from ..utile import *
+from .. import erreurs
 
 #Variable ------------------------------------------
 def recup_variables(_variables):
@@ -34,87 +35,89 @@ def recup_partie_variable(num, variables, variable, decode):
 
 	return variable
 
-def recup_partie_condition(variable, variables, remplacement, decode):
-	nom_cond, *parties = variable[:-1].split('(')
-	kwargs = [kwarg.split('=') for kwarg in '('.join(parties).split(',')]
+def recup_partie_condition(variable, variables, defauts, decode):
+	nom_cond, parties = variable[:-1].split('(', 1)
+	kwargs = [kwarg.split('=') for kwarg in parties.split(',') if kwarg]
 	kwargs = [kwarg if len(kwarg) == 2 else kwarg*2 for kwarg in kwargs]
-	kwargs = {k.strip():convert_variable(v.strip(), variables, remplacement, decode) for k, v in kwargs if type(k) == str}
-
+	kwargs = {k.strip():convert_variable(v.strip(), variables, defauts, decode) for k, v in kwargs if type(k) == str}
 	return nom_cond, kwargs
 
-def convert_variable(value, variables, remplacement, decode, *, convert_redirection=True):
+def convert_variable(value, variables, defauts, decode, *, exclues=[], leve_erreur=True):
 
-	if value[0] not in balises:
-		if convert_redirection:
-			if value[0] != '#':
-				value = '#%s#'%value
-			value = replace_variables(value, variables, remplacement, decode)
-	else:
+	if value[0] in balises and value[0] not in exclues:
 		value = decode(value)
 
+	elif 'redirection' not in exclues:
+
+		#-----------------------------------------------------------------
+		#Remplacement des redirections
+
+		texte_precedent = value
+		if texte_precedent[0] != '#' and '#' not in exclues:
+			texte_precedent = '#%s#'%value
+
+		texte = str(texte_precedent)[:]
+
+		nbr_boucle = 0
+		values_not_str = {}
+		is_condition = False
+
+		while texte.count('#') > 1:
+
+			nbr_boucle += 1
+
+			if nbr_boucle > 1000:
+				raise Exception("Boucle infinie détectée !")
+			
+			for morceau in texte.split('#')[1:-1]:
+				if not morceau: continue
+
+				kwargs = {}
+				num = '#'
+				base_variable = '#%s#'%morceau
+
+				if '|' in morceau:
+					morceau, num = morceau.split('|')
+				if ')' == morceau[-1] and '(' != morceau[0] and decode:
+					morceau, kwargs = recup_partie_condition(morceau, variables, defauts, decode)
+					is_condition = True
+
+				m = values_not_str.get(morceau, '#')
+				if m != '#': morceau = m
+				elif morceau[0] in balises and len(morceau) >= 2: #Pour le cas (#nbr#-#nbr#) par exemple
+					morceau = decode(morceau)
+
+				variable = (['#'] + [r for r in [r.get(morceau, '#') for r in defauts] if r != '#'])[-1]
+
+				for Tvars in variables:
+					if morceau in Tvars:
+						variable = Tvars[morceau]
+						break
+						
+				if variable != '#':
+					if is_condition:
+						is_condition = False
+						value = variable(**kwargs)
+					else:
+						value = recup_partie_variable(num, variables, variable, decode)
+					value_str = str(value)
+					if not isinstance(value, str):
+						values_not_str[value_str] = value
+					if not callable(variable) or kwargs:
+						texte = texte.replace(base_variable, value_str)
+					else:
+						values_not_str[base_variable] = value
+				elif leve_erreur:
+					raise erreurs.VariableError(morceau)
+
+			if texte_precedent == texte:
+				break
+			texte_precedent = texte
+
+		value = values_not_str.get(texte, texte)
+		#------------------------------------------------------------------
+
 	return value
-
-def replace_variables(texte_precedent, variables, remplacement, decode=None):
-
-	texte = str(texte_precedent)[:]
-
-	nbr_boucle = 0
-	values_not_str = {}
-	is_condition = False
-
-	while texte.count('#') > 1:
-
-		nbr_boucle += 1
-
-		if nbr_boucle > 1000:
-			raise Exception("Boucle infinie détectée !")
-		
-		for morceau in texte.split('#')[1:-1]:
-			if not morceau: continue
-
-			#print('------ morc : ', morceau)
-
-			kwargs = {}
-			num = '#'
-			base_variable = '#%s#'%morceau
-
-			if '|' in morceau:
-				morceau, num = morceau.split('|')
-			if ')' == morceau[-1] and '(' != morceau[0] and decode:
-				morceau, kwargs = recup_partie_condition(morceau, variables, remplacement, decode)
-				is_condition = True
-
-			m = values_not_str.get(morceau, '#')
-			if m != '#': morceau = m
-			elif morceau[0] in balises: 
-				morceau = decode(morceau)
-
-			variable = (['#'] + [r for r in [r.get(morceau, '#') for r in remplacement] if r != '#'])[-1]
-			#print('------ vars : ', variables)
-			for Tvars in variables:
-				if morceau in Tvars:
-					variable = Tvars[morceau]
-					break
-					
-			if variable != '#':
-				if is_condition:
-					is_condition = False
-					value = variable(**kwargs)
-				else:
-					value = recup_partie_variable(num, variables, variable, decode)
-				value_str = str(value)
-				if not isinstance(value, str):
-					values_not_str[value_str] = value
-				if not callable(variable) or kwargs:
-					texte = texte.replace(base_variable, value_str)
-				else:
-					values_not_str[base_variable] = value
-
-		if texte_precedent == texte:
-			break
-		texte_precedent = texte
-
-	return values_not_str.get(texte, texte)
 
 def recup_partie_parentese(texte, fonction=None):
 	début = 0
