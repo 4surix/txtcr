@@ -21,7 +21,7 @@ class BaliseError(Exception):
 		ss.profondeur = profondeur
 
 	def __str__(ss):
-		return f"{ss.__doc__} || Balise : |{ss.balise}| Profondeur : {ss.profondeur} Valeur : |{ss.valeur}| "
+		return f"{ss.__doc__}, Balise : |{ss.balise}| Profondeur : {ss.profondeur} Valeur : |{ss.valeur}| "
 
 class BaliseBasiqueMauvaise(Exception):
 	"""Balise basique inconnue, vérifiez les balises basique"""
@@ -87,3 +87,12 @@ class VariableError(Exception):
 
 	def __str__(ss):
 		return f'{ss.__doc__}, Nom variable : "{ss.variable}"'
+
+class ParamError(Exception):
+	"""Paramètres incorrects"""
+
+	def __init__(ss, action):
+		ss.action = action
+
+	def __str__(ss):
+		return f'{ss.__doc__}, Nom action : "{ss.action}"'

@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import random
+
+from .. import erreurs
 from .fonc_type import *
 
 #-----------------------------------------------------------------------------
@@ -9,22 +12,28 @@ from .fonc_type import *
 #Action ----------------------------------------------------------------------
 def _set(TXTCRvars, TXTCRtmps, defauts, decode, value): 
 	item, *value = value.split(' = ')
-	item = convert_variable(item, TXTCRvars, defauts, decode, exclues=['redirection'])
-	if value:
+	if item and value:
+		if item[0] in balises: item = decode(item)
 		value = convert_variable(' = '.join(value), TXTCRvars, defauts, decode)
+	else:
+		raise erreurs.ParamError('>set>')
 
-		is_modifier = False
-		for Tvars in TXTCRvars:
-			if item in Tvars:
-				Tvars[item] = value
-				is_modifier = True
+	is_modifier = False
+	for Tvars in TXTCRvars:
+		if item in Tvars:
+			Tvars[item] = value
+			is_modifier = True
 
-		if not is_modifier:
-			TXTCRvars[0][item] = value 
+	if not is_modifier:
+		TXTCRvars[0][item] = value 
 
 def _add(TXTCRvars, TXTCRtmps, defauts, decode, value):
 	item, *value = value.split(' + ')
-	if item[0] in balises: item = decode(item)
+	if item and value:
+		if item[0] in balises: item = decode(item)
+		value = convert_variable(' + '.join(value), TXTCRvars, defauts, decode)
+	else:
+		raise erreurs.ParamError('>add>')
 
 	def verif_existe():
 		for Tvars in TXTCRvars:
@@ -33,23 +42,26 @@ def _add(TXTCRvars, TXTCRtmps, defauts, decode, value):
 		if resulta: TXTCRvars[0][item] = resulta
 	verif_existe()
 
-	if value:
-		value = convert_variable(' + '.join(value), TXTCRvars, defauts, decode)
-		for Tvars in TXTCRvars:
-			if item in Tvars:
-				if isinstance(Tvars[item], list):
-					Tvars[item].append(value)
-				elif isinstance(Tvars[item], (str, int, float)):
-					Tvars[item] += value
-				elif isinstance(Tvars[item], dict):
-					key, value = value.split(' : ', 1)
-					Tvars[item][key] = value
-				elif isinstance(Tvars[item], tuple):
-					Tvars[item] = Tvars[item] + (value,)
+	for Tvars in TXTCRvars:
+		if item in Tvars:
+			if isinstance(Tvars[item], list):
+				Tvars[item].append(value)
+			elif isinstance(Tvars[item], (str, int, float)):
+				Tvars[item] += value
+			elif isinstance(Tvars[item], dict):
+				key, value = value.split(' : ', 1)
+				Tvars[item][key] = value
+			elif isinstance(Tvars[item], tuple):
+				Tvars[item] = Tvars[item] + (value,)
 
 def _del(TXTCRvars, TXTCRtmps, defauts, decode, value):
 	item, *value = value.split(' - ')
-	item = convert_variable(item, TXTCRvars, defauts, decode, exclues=['redirection'])
+	
+	if item:
+		if item[0] in balises: item = decode(item)
+	else:
+		raise erreurs.ParamError('>del>')
+
 	if value: 
 		value = convert_variable(' - '.join(value), TXTCRvars, defauts, decode)
 		for Tvars in TXTCRvars:
@@ -73,9 +85,12 @@ def _del(TXTCRvars, TXTCRtmps, defauts, decode, value):
 
 def _ped(TXTCRvars, TXTCRtmps, defauts, decode, value):
 	item, *texte = value.split(' ? ')
-	texte = input(' ? '.join(texte))
-	item = convert_variable(item, TXTCRvars, defauts, decode, exclues=['redirection'])
-	TXTCRvars[-1][item] = decode(texte)
+	texte = decode(input(' ? '.join(texte)))
+	if item:
+		if item[0] in balises: item = decode(item)
+		TXTCRvars[-1][item] = texte
+	else:
+		return texte
 
 def _get(TXTCRvars, TXTCRtmps, defauts, decode, value):
 	return convert_variable(value, TXTCRvars, defauts, decode)
@@ -87,23 +102,54 @@ def _aff(TXTCRvars, TXTCRtmps, defauts, decode, value):
 
 def _typ(TXTCRvars, TXTCRtmps, defauts, decode, value):
 	*item, variable = value.split(' = ')
-	variable = convert_variable(variable, TXTCRvars, defauts, decode)
+	if variable:
+		variable = convert_variable(variable, TXTCRvars, defauts, decode)
+	else:
+		raise erreurs.ParamError('>typ>')
+
 	type_value = gettype(variable)
+
 	if not item:
 		return type_value
 	else:
-		item = convert_variable(' = '.join(item), TXTCRvars, defauts, decode, exclues=['redirection'])
+		item = ' = '.join(item)
+		if item[0] in balises: item = decode(item)
 		TXTCRvars[0][item] = type_value
 
 def _len(TXTCRvars, TXTCRtmps, defauts, decode, value):
 	*item, variable = value.split(' = ')
-	variable = convert_variable(variable, TXTCRvars, defauts, decode, exclues=balises)
+
+	if variable:
+		variable = convert_variable(variable, TXTCRvars, defauts, decode, exclues=balises)
+	else:
+		raise erreurs.ParamError('>len>')
+
 	nbr_element = len(variable)
+
 	if not item:
 		return nbr_element
 	else:
-		item = convert_variable(' = '.join(item), TXTCRvars, defauts, decode, exclues=['redirection'])
+		item = ' = '.join(item)
+		if item[0] in balises: item = decode(item)
 		TXTCRvars[0][item] = nbr_element
+
+def _ale(TXTCRvars, TXTCRtmps, defauts, decode, value):
+	*item, nbrs = value.split(' = ')
+	nbrs = [convert_variable(nbr.strip(), TXTCRvars, defauts, decode) for nbr in nbrs.split(',')]
+
+	if len(nbrs) == 2:
+		nbr_alea = random.randint(nbrs[0],nbrs[1])
+	elif len(nbrs) == 3:
+		nbr_alea = float(str(random.uniform(nbrs[0],nbrs[1]))[:nbrs[2]+2])
+	else:
+		raise erreurs.ParamError('>ale>')
+
+	if not item:
+		return nbr_alea
+	else:
+		item = ' = '.join(item)
+		if item[0] in balises: item = decode(item)
+		TXTCRvars[0][item] = nbr_alea
 
 func_actions = {
 	#Modification de variable
@@ -117,7 +163,8 @@ func_actions = {
 	'del': _del,
 	#Utilitaire
 	'typ': _typ,
-	'len': _len
+	'len': _len,
+	'ale': _ale
 }
 
 def _verif_type(variable):
@@ -157,6 +204,7 @@ func_conditions = {
 	'inn': lambda var1, var2: var1 in var2,
 	'innn': lambda var1, var2: _objet_in(var1, var2),
 	'&': lambda var1, var2: var1 and var2,
+	'&&': lambda var1, var2: (var1 and var2) == (var1 and var2),
 	'|': lambda var1, var2: var1 or var2,
 	'||': lambda var1, var2: (var1 or var2) != (var1 and var2),
 }
@@ -246,10 +294,10 @@ class Condition:
 			for nbr in range(0, len(actions)-1, 2):
 				yield actions[nbr:nbr+2]
 
-		for symb, value in get_values_and_symb():
-			func = func_actions.get(symb)
+		for nom_action, value in get_values_and_symb():
+			func = func_actions.get(nom_action)
 			if not func:
-				raise Exception('Func')
+				raise Exception("L'action >%s> n'existe pas !"%nom_action)
 
 			retour = func(value=value, TXTCRvars=ss.variables, TXTCRtmps=ss.vars_tempo, defauts=ss.defauts, decode=ss.decode)
 			if retour != None:

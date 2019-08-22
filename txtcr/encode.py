@@ -145,7 +145,7 @@ class Encode:
 		elif 'TXTCRbool' == vtype:
 			texte = '%s%s'%(1 if valeur.status else 0, valeur.commentaire)
 
-		elif is_class(valeur) and '__TXTCRvars__' in valeur.__class__.__dict__:
+		elif is_class(valeur): 
 			data = ss.convert(valeur, profondeur=profondeur)
 			texte = '<%s>' % data[3:]
 

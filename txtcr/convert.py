@@ -42,7 +42,7 @@ class ClassVersTexte(Encode):
 					ops.get('date', clss.__dict__.get('__TXTCRdate__')),
 					ops.get('hash', clss.__dict__.get('__TXTCRhash__')),
 					ops.get('encodage', clss.__dict__.get('__TXTCRencd__')),
-					ss.encode({c:v for c,v in data.__dict__.items() if c not in clss.__TXTCRtmps__}, nbr))
+					ss.encode({c:v for c,v in data.__dict__.items() if c not in clss.__dict__.get('__TXTCRtmps__', []) and c[:2] != '__'}, nbr))
 
 		elif isinstance(data, dict):
 

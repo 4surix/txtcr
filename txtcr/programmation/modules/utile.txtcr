@@ -1,5 +1,6 @@
 |;#
 |;|N#Utilitaire
+|;|B#début=+0
 |;|I#{
 /	"Fonction pour savoir si une variable est un/des type(s) 
 	istype(var=variable, types=tuple de type) -> bool;
@@ -46,5 +47,44 @@
 	>if0
 		>add> _texte_couper + _mot
 		>get> _texte_couper
+:;
+/	"Met à l'envers un texte
+	alenvers(texte=str/bytes) -> str;
+"alenvers": 
+: 1
+>if1
+    >len> position = texte
+    >set> reconstitution = ""
+    >get> _alenvers(position, reconstitution, texte)
+:;
+"_alenvers":
+:
+position !== 0
+>if1
+    >del> position - +1
+    >add> reconstitution + texte|position
+    >get> _alenvers(position, reconstitution, texte)
+>if0
+    >get> reconstitution
+:;
+/	"Créer une liste de nombre
+	suite(début=nbr,fin=nbr) -> list
+	Par défaut, début = +0;
+"suite:
+: 1
+>if1
+	>set> nbr = début
+	>set> nbrs = []
+	>get> _ajouter_nbr(nbrs, nbr, fin)
+:;
+"_ajouter_nbr:
+:
+nbr <= fin
+>if1
+	>add> nbrs + nbr
+	>add> nbr + +1
+	>get> _ajouter_nbr(nbrs, nbr, fin)
+>if0
+	>get> nbrs
 :
 }

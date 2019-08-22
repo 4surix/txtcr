@@ -191,7 +191,7 @@ class Decode:
 			valeur_decodée = tuple([ss.decoder(balise+v, profondeur) for v in values if v])
 
 		elif balise == '"':
-			if len(texte) >= 2 and texte[-2] != '\\' and texte[-1] in ['"',';'] : texte = texte[:-1]
+			if (len(texte) < 2 or texte[-2] != '\\') and texte[-1:] in ['"',';'] : texte = texte[:-1]
 			valeur_decodée = verif_contenue(texte, decode=True, isformat2=ss.isformat2)
 
 			if valeur_decodée.count('#') >= 2:
@@ -200,7 +200,7 @@ class Decode:
 				valeur_decodée._decode = ss.decoder
 
 		elif balise == "'":
-			if len(texte) >= 2 and texte[-2] != '\\' and texte[-1] in ['"',';'] : texte = texte[:-1]
+			if (len(texte) < 2 or texte[-2] != '\\') and texte[-1:] in ["'",';'] : texte = texte[:-1]
 			valeur_decodée = texte.encode()
 
 		elif balise == "O":
