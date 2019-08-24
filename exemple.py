@@ -172,6 +172,8 @@ exemple = txtcr.decode("""
 "pouet: <#math#>;
 "début: :1
 >if1
+	>sum> ["a";"b"]
+	>get> =3^2V2+2*10/2
 	>ale> nbr_alea = +1, +5, +3
 	>get> nbr_alea
 	>get> suite(début=+0,fin=+10)

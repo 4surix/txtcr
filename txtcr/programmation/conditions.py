@@ -6,180 +6,207 @@ from .. import erreurs
 from .fonc_type import *
 
 #-----------------------------------------------------------------------------
-#TYPE FONCTION
+#TYPE CONDITION
 #-----------------------------------------------------------------------------
 
-#Action ----------------------------------------------------------------------
-def _set(TXTCRvars, TXTCRtmps, defauts, decode, value): 
-	item, *value = value.split(' = ')
-	if item and value:
-		if item[0] in balises: item = decode(item)
-		value = convert_variable(' = '.join(value), TXTCRvars, defauts, decode)
-	else:
-		raise erreurs.ParamError('>set>')
+#Actions ----------------------------------------------------------------------
 
-	is_modifier = False
-	for Tvars in TXTCRvars:
-		if item in Tvars:
-			Tvars[item] = value
-			is_modifier = True
+class FuncAction:
 
-	if not is_modifier:
-		TXTCRvars[0][item] = value 
+	def __init__(ss, TXTCRvars, TXTCRtmps, defauts, decode):
+		ss.TXTCRvars = TXTCRvars
+		ss.TXTCRtmps = TXTCRtmps
+		ss.defauts = defauts
+		ss.decode = decode
+		ss.infos = dict(variables=TXTCRvars,
+						defauts=defauts, 
+						decode=decode)
 
-def _add(TXTCRvars, TXTCRtmps, defauts, decode, value):
-	item, *value = value.split(' + ')
-	if item and value:
-		if item[0] in balises: item = decode(item)
-		value = convert_variable(' + '.join(value), TXTCRvars, defauts, decode)
-	else:
-		raise erreurs.ParamError('>add>')
+	def act_set(ss, value): 
+		item, value = ss.get_item_value(value, ' = ')
 
-	def verif_existe():
-		for Tvars in TXTCRvars:
-			if item in Tvars: return
-		resulta = recup_default(defauts).get(item)
-		if resulta: TXTCRvars[0][item] = resulta
-	verif_existe()
+		if item and value:
+			if item[0] in balises: item = ss.decode(item)
+			value = convert_variable(value, **ss.infos)
+		else:
+			raise erreurs.ParamError('>set>')
 
-	for Tvars in TXTCRvars:
-		if item in Tvars:
-			if isinstance(Tvars[item], list):
-				Tvars[item].append(value)
-			elif isinstance(Tvars[item], (str, int, float)):
-				Tvars[item] += value
-			elif isinstance(Tvars[item], dict):
-				key, value = value.split(' : ', 1)
-				Tvars[item][key] = value
-			elif isinstance(Tvars[item], tuple):
-				Tvars[item] = Tvars[item] + (value,)
+		is_modifier = False
+		for Tvars in ss.TXTCRvars:
+			if item in Tvars:
+				Tvars[item] = value
+				is_modifier = True
 
-def _del(TXTCRvars, TXTCRtmps, defauts, decode, value):
-	item, *value = value.split(' - ')
-	
-	if item:
-		if item[0] in balises: item = decode(item)
-	else:
-		raise erreurs.ParamError('>del>')
+		if not is_modifier:
+			ss.TXTCRvars[0][item] = value 
 
-	if value: 
-		value = convert_variable(' - '.join(value), TXTCRvars, defauts, decode)
-		for Tvars in TXTCRvars:
+	def act_add(ss, value):
+		item, value = ss.get_item_value(value, ' + ')
+
+		if item and value:
+			if item[0] in balises: item = ss.decode(item)
+			value = convert_variable(value, **ss.infos)
+		else:
+			raise erreurs.ParamError('>add>')
+
+		def verif_existe():
+			for Tvars in ss.TXTCRvars:
+				if item in Tvars: return
+			resulta = recup_default(ss.defauts).get(item)
+			if resulta: 
+				ss.TXTCRvars[0][item] = resulta
+			else:
+				raise erreurs.VariableError(item)
+		verif_existe()
+
+		for Tvars in ss.TXTCRvars:
 			if item in Tvars:
 				if isinstance(Tvars[item], list):
-					Tvars[item].remove(value)
-				elif isinstance(Tvars[item], (int, float)):
-					Tvars[item] -= value
+					Tvars[item].append(value)
+				elif isinstance(Tvars[item], (str, int, float)):
+					Tvars[item] += value
 				elif isinstance(Tvars[item], dict):
-					del Tvars[item][value]
+					key, value = value.split(':', 1)
+					Tvars[item][key.strip()] = value.strip()
 				elif isinstance(Tvars[item], tuple):
-					Tvars[item] = Tvars[item] - (value,)
-				elif isinstance(Tvars[item], str):
-					Tvars[item].replace(value, '')
-				break
-	else:
-		for Tvars in TXTCRvars:
-			if item in Tvars:
-				del Tvars[item]
-				break
+					Tvars[item] = Tvars[item] + (value,)
 
-def _ped(TXTCRvars, TXTCRtmps, defauts, decode, value):
-	item, *texte = value.split(' ? ')
-	texte = decode(input(' ? '.join(texte)))
-	if item:
-		if item[0] in balises: item = decode(item)
-		TXTCRvars[-1][item] = texte
-	else:
-		return texte
+	def act_del(ss, value):
+		item, value = ss.get_item_value(value, ' - ')
 
-def _get(TXTCRvars, TXTCRtmps, defauts, decode, value):
-	return convert_variable(value, TXTCRvars, defauts, decode)
+		if not item:
+			item = value
+			value = None
+		
+		if item:
+			if item[0] in balises: item = ss.decode(item)
+		else:
+			raise erreurs.ParamError('>del>')
 
-def _aff(TXTCRvars, TXTCRtmps, defauts, decode, value):
-	if value[0] == '"' and value[-1] == '"':
-		value = value[1:-1]
-	print(convert_variable(value, TXTCRvars, defauts, decode, exclues=balises+['#'], leve_erreur=False))
+		if value: 
+			value = convert_variable(value, **ss.infos)
+			for Tvars in ss.TXTCRvars:
+				if item in Tvars:
+					if isinstance(Tvars[item], list):
+						Tvars[item].remove(value)
+					elif isinstance(Tvars[item], (int, float)):
+						Tvars[item] -= value
+					elif isinstance(Tvars[item], dict):
+						del Tvars[item][value]
+					elif isinstance(Tvars[item], tuple):
+						Tvars[item] = Tvars[item] - (value,)
+					elif isinstance(Tvars[item], str):
+						Tvars[item].replace(value, '')
+					break
+		else:
+			for Tvars in ss.TXTCRvars:
+				if item in Tvars:
+					del Tvars[item]
+					break
 
-def _typ(TXTCRvars, TXTCRtmps, defauts, decode, value):
-	*item, variable = value.split(' = ')
-	if variable:
-		variable = convert_variable(variable, TXTCRvars, defauts, decode)
-	else:
-		raise erreurs.ParamError('>typ>')
+	def act_ped(ss, value):
+		item, texte = ss.get_item_value(value, ' ? ')
+		return ss.sauv_or_retourne(item, ss.decode(input(texte)))
 
-	type_value = gettype(variable)
+	def act_get(ss, value):
+		return convert_variable(value, **ss.infos)
 
-	if not item:
-		return type_value
-	else:
-		item = ' = '.join(item)
-		if item[0] in balises: item = decode(item)
-		TXTCRvars[0][item] = type_value
+	def act_aff(ss, value):
+		if value[0] == '"' and value[-1] == '"':
+			value = value[1:-1]
+		print(convert_variable(value, exclues=balises+['#'], leve_erreur=False, **ss.infos))
 
-def _len(TXTCRvars, TXTCRtmps, defauts, decode, value):
-	*item, variable = value.split(' = ')
+	def act_typ(ss, value):
+		item, variable = ss.get_item_value(value, ' = ')
 
-	if variable:
-		variable = convert_variable(variable, TXTCRvars, defauts, decode, exclues=balises)
-	else:
-		raise erreurs.ParamError('>len>')
+		if variable:
+			variable = convert_variable(variable, **ss.infos)
+		else:
+			raise erreurs.ParamError('>typ>')
 
-	nbr_element = len(variable)
+		return ss.sauv_or_retourne(item, gettype(variable))
 
-	if not item:
-		return nbr_element
-	else:
-		item = ' = '.join(item)
-		if item[0] in balises: item = decode(item)
-		TXTCRvars[0][item] = nbr_element
+	def act_len(ss, value):
+		item, variable = ss.get_item_value(value, ' = ')
 
-def _ale(TXTCRvars, TXTCRtmps, defauts, decode, value):
-	*item, nbrs = value.split(' = ')
-	nbrs = [convert_variable(nbr.strip(), TXTCRvars, defauts, decode) for nbr in nbrs.split(',')]
+		if variable:
+			variable = convert_variable(variable, exclues=balises, **ss.infos)
+		else:
+			raise erreurs.ParamError('>len>')
 
-	if len(nbrs) == 2:
-		nbr_alea = random.randint(nbrs[0],nbrs[1])
-	elif len(nbrs) == 3:
-		nbr_alea = float(str(random.uniform(nbrs[0],nbrs[1]))[:nbrs[2]+2])
-	else:
-		raise erreurs.ParamError('>ale>')
+		return ss.sauv_or_retourne(item, len(variable))
 
-	if not item:
-		return nbr_alea
-	else:
-		item = ' = '.join(item)
-		if item[0] in balises: item = decode(item)
-		TXTCRvars[0][item] = nbr_alea
+	def act_sum(ss, value):
+		item, variable = ss.get_item_value(value, ' = ')
 
-func_actions = {
-	#Modification de variable
-	'set': _set,
-	'get': _get,
-	#Intéraction avec l'utiisateur
-	'aff': _aff,
-	'ped': _ped,
-	#Ajout/suppresion
-	'add': _add,
-	'del': _del,
-	#Utilitaire
-	'typ': _typ,
-	'len': _len,
-	'ale': _ale
-}
+		if variable:
+			variable = convert_variable(variable, **ss.infos)
+		else:
+			raise erreurs.ParamError('>sum>')
 
-def _verif_type(variable):
-	if isinstance(variable, (int, float)) and not isinstance(variable, bool):
-		if str(variable)[0] == '-':
-			return 'negatif'
-		return 'positif'
-	return type(variable).__name__.replace('TXTCR', '')
+		def meme_type():
+			Ttype = gettype(variable[0])
+			for element in variable:
+				if gettype(element) != Ttype:
+					return False
+			return True
+
+		elements_add = None
+		if meme_type():
+			if isinstance(variable[0], list):
+				elements_add = []
+				for element in variable:
+					elements_add.extend(element)
+			elif isinstance(variable[0], str):
+				elements_add = ''
+				for element in variable:
+					elements_add += element
+			elif isinstance(variable[0], (int, float)) and not isinstance(variable[0], bool):
+				elements_add = 0
+				for element in variable:
+					elements_add += element
+		else:
+			raise Exception('Les élément de la variable dans >sum> ne sont pas identique')
+
+		return ss.sauv_or_retourne(item, elements_add)
+
+	def act_ale(ss, value):
+		item, nbrs = ss.get_item_value(value, ' = ')
+		nbrs = [convert_variable(nbr.strip(), **ss.infos) for nbr in nbrs.split(',')]
+
+		if len(nbrs) == 2:
+			nbr_alea = random.randint(nbrs[0],nbrs[1])
+		elif len(nbrs) == 3:
+			nbr_alea = float(str(random.uniform(nbrs[0],nbrs[1]))[:nbrs[2]+2])
+		else:
+			raise erreurs.ParamError('>ale>')
+
+		return ss.sauv_or_retourne(item, nbr_alea)
+
+	#Utile ------------------------------
+
+	def get_item_value(ss, value, symb):
+		params = value.split(symb, 1)
+		if len(params) == 1:
+			return '', params[0]
+		else:
+			return params[0], params[1]
+
+	def sauv_or_retourne(ss, item, value):
+		if not item:
+			return value
+		else:
+			if item[0] in balises: item = ss.decode(item)
+			ss.TXTCRvars[0][item] = value
+
+# Comparaisons -------------------------------------------------------------------
 
 def _type_in(var1, var2):
 	variable = var1
 	conteneur = var2
-	nom_type = _verif_type(variable)
+	nom_type = gettype(variable)
 	for partie in conteneur:
-		type_partie = _verif_type(partie)
+		type_partie = gettype(partie)
 		if nom_type == type_partie:
 			return True
 	return False
@@ -192,24 +219,33 @@ def _objet_in(var1, var2):
 			return True
 	return False
 
+def _meme_type(var1, var2):
+	Ttype = gettype(var1)
+	for element in var2:
+		if gettype(element) != Ttype:
+			return False
+	return True
+
 func_conditions = {
 	'>': lambda var1, var2: var1 > var2,
 	'=>': lambda var1, var2: var1 >= var2,
 	'<': lambda var1, var2: var1 < var2,
 	'<=': lambda var1, var2: var1 <= var2,
-	'=': lambda var1, var2: _verif_type(var1) == _verif_type(var2),
+	'=': lambda var1, var2: gettype(var1) == gettype(var2),
 	'==': lambda var1, var2:  var1 == var2,
 	'===': lambda var1, var2: var1 is var2,
 	'in': lambda var1, var2: _type_in(var1, var2),
 	'inn': lambda var1, var2: var1 in var2,
 	'innn': lambda var1, var2: _objet_in(var1, var2),
+	'innnn': lambda var1, var2: _meme_type(var1, var2),
 	'&': lambda var1, var2: var1 and var2,
 	'&&': lambda var1, var2: (var1 and var2) == (var1 and var2),
 	'|': lambda var1, var2: var1 or var2,
 	'||': lambda var1, var2: (var1 or var2) != (var1 and var2),
 }
 
-#Condition + Action --------------------------------------------------------------------
+#Condition --------------------------------------------------------------------
+
 class Condition:
 
 	def __init__(ss, fonc, vars_tempo, variables, defauts, decode, acts_true, acts_false):
@@ -220,6 +256,7 @@ class Condition:
 		ss.decode = decode
 		ss.acts_true  = acts_true
 		ss.acts_false = acts_false
+		ss.func_actions = FuncAction(TXTCRvars=ss.variables, TXTCRtmps=ss.vars_tempo, defauts=ss.defauts, decode=ss.decode)
 
 	def config_condition(ss, texte):
 		valeur_actuel = []
@@ -238,6 +275,7 @@ class Condition:
 			elif partie or valeur_actuel: valeur_actuel.append(partie)
 
 		ajout_valeur(valeur_actuel)
+
 		return condition_actuel
 
 	def decoupe_condition(ss, texte):
@@ -258,7 +296,7 @@ class Condition:
 			yield [nbr+2] + liste[nbr:nbr+3]
 
 	def is_condition(ss, value):
-		if isinstance(value, list) and len(value) >= 3 and value[1].replace('!', '') in func_conditions:
+		if isinstance(value, list) and len(value) >= 3 and isinstance(value[1], str) and value[1].replace('!', '') in func_conditions:
 			return True
 
 	def applique_condition(ss, liste_conditions):
@@ -295,11 +333,12 @@ class Condition:
 				yield actions[nbr:nbr+2]
 
 		for nom_action, value in get_values_and_symb():
-			func = func_actions.get(nom_action)
-			if not func:
+			try:
+				func = getattr(ss.func_actions, 'act_'+nom_action)
+			except AttributeError:
 				raise Exception("L'action >%s> n'existe pas !"%nom_action)
 
-			retour = func(value=value, TXTCRvars=ss.variables, TXTCRtmps=ss.vars_tempo, defauts=ss.defauts, decode=ss.decode)
+			retour = func(value)
 			if retour != None:
 				retours.append(retour)
 
@@ -310,7 +349,6 @@ class Condition:
 		else:
 			return tuple(retours)
 
-#Fonction -------------------------------------------------------------
 class DefCondition:
 
 	def __init__(ss, vars_tempo, variables, defauts, decode):

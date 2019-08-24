@@ -58,9 +58,7 @@ class TXTCRcalc:
 	def __call__(ss, *cle, **ops): return ss.verif(*cle, **ops)
 	def verif(ss, *cle, **ops):
 		variables = get_vars(ss._clss, ops)
-		return calc.getnbr(
-					calc.parentheses(
-							convert_variable(ss.calcul, variables, ss._clss.get('defauts'), ss._decode, exclues=balises+['#'], leve_erreur=False)))[0]
+		return calcul(convert_variable(ss.calcul, variables, ss._clss.get('defauts'), ss._decode, exclues=balises+['#'], leve_erreur=False))
 
 class TXTCRcond:
 	def __init__(ss, condition, clss, decode):

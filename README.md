@@ -66,6 +66,22 @@ _Facultatifs :_
 _Ex format 1: `{"wouf:1"pouet`_  
 _Ex format 2: `{"wouf:"pouet}`_
 
+## Calcul
+
+### Syboles :
+- **`^`** : Exposant  
+- **`V`** : Racine
+- **`*`** : Multiplication  
+- **`/`** : Division 
+- **`%`** : Modulo
+- **`+`** : Addition
+- **`-`** : Soustraction
+
+### Exemple :
+`=3^2V2 = 3`  (3 exposant 3 = 9, 9 racine carré (2) = 3)
+`=2*5+3*6 = 28` (2 multiplé par 5 = 10, 3 multiplié par 6 = 18, 10 additionné par 18 = 28)
+`(82+18)/(12-2) = 10` (82 additionné par 18 = 100, 12 soustrait par 2 = 10, 100 divisé par 10 = 10)
+
 ## Comparaison
 
 ### Définition : 

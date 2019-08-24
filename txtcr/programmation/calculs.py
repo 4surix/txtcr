@@ -6,61 +6,92 @@ from .fonc_type import *
 #TYPE CALCUL
 #-----------------------------------------------------------------------------
 
-#Sert à récupérer les 2 nombres à côter d'un symbole, n1 = Nombre 1, n2 = Nombre 2
-def _split(texte, symb):
-	r = texte.split(symb)
-	if not r[0]: n1, n2 = r[1], r[2]
-	elif r[1]: n1, n2 = r[0], r[1]
-	else: n1, n2 = r[0], symb+r[2]
-	return n1, n2
+symbs_calcul = [
+	'-',
+	'+',
+	'*',
+	'/',
+	'%',
+	'^',
+	'V'
+]
 
 class Calcul:
-	
-	caracs_nombre = list(map(str, range(10))) + ['.', ',']
-	
-	def getnbr(ss, v, alinvers=False):
-		v = list(v)
-		if alinvers: v.reverse()
 
-		num = v.pop(0)
-		
-		for carac in v:
-			if carac in ss.caracs_nombre:
-				num += carac
-			elif alinvers and carac in ['-']:
-				num += carac
-				break
-			else: break
+	def __call__(ss, equation):
+		return ss.parentheses(equation)
 
-		if alinvers: num = num[::-1]
-			
-		#Convertion Nombre str en Int/Float
-		if ',' in num: nbr = float(num.replace(',', '.'))
-		elif '.' in num: nbr = float(num)
-		else: nbr = int(num)
+	def equation(ss, equ):
 
-		return nbr, num
+		nbr = ''
+		nbrs = []
+		symb = ''
 
-	def sep(ss, equ, symb):
-		n1, n2 = _split(equ, symb)
-		n1, n2 = ss.getnbr(n1, True), ss.getnbr(n2)
-		expr = n1[1]+symb+n2[1]
-		if symb == '**' and n2[0] > 1000: raise Exception('Exposant > 1000')
-		
-		return equ.replace(expr, str(eval(expr)))
+		def ajout_nbr(nbr):
+			if ',' in nbr: nbr = float(nbr.replace(',', '.'))
+			elif '.' in nbr: nbr = float(nbr)
+			else: nbr = int(nbr)
+			nbrs.append(nbr)
+			return ''
+					
+		for carac in equ[:]:
+			if (not nbr and carac in '+-') or carac in '.,0123456789':
+				nbr += carac
+			else:
+				nbr = ajout_nbr(nbr)
+				if carac not in symbs_calcul:
+					raise Exception("Le symbole %s n'existe pas !"%carac)
+				nbrs.append(carac)
+		ajout_nbr(nbr)
 
-	def equation(ss, equation):
-		if not all([True if symb in '0123456789+-*/.,^ ' else False for symb in equation]):
-			raise Exception('Equation non valide ! %s'%equation)
-		equ = equation.replace('^', '**')
-		while 1:
-			if '**' in equ: equ = ss.sep(equ, '**')
-			elif '*' in equ: equ = ss.sep(equ, '*')
-			elif '/' in equ: equ = ss.sep(equ, '/')
-			elif '+' in equ[1:]: equ = ss.sep(equ, '+')
-			elif '-' in equ[1:]: equ = ss.sep(equ, '-')
-			else: return equ
-			
+		def get_nbrs(place):
+			place_gauche = place - 1
+			place_droite = place + 1
+			n1, n2 = nbrs[place_gauche], nbrs[place_droite]
+			del nbrs[place_gauche:place_droite]
+			return n1, n2, place_gauche
+
+		place = 0
+		while nbrs.count('^') or nbrs.count('V'):
+			partie = nbrs[place]
+			if partie == '^':
+				n1, n2, place = get_nbrs(place)
+				nbrs[place] = n1 ** n2
+			elif partie == 'V':
+				n1, n2, place = get_nbrs(place)
+				nbrs[place] = n1 ** (1 / n2)
+			else:
+				place += 1
+
+		place = 0
+		while nbrs.count('*') or nbrs.count('/'):
+			partie = nbrs[place]
+			if partie == '*':
+				n1, n2, place = get_nbrs(place)
+				nbrs[place] = n1 * n2
+			elif partie == '/':
+				n1, n2, place = get_nbrs(place)
+				nbrs[place] = n1 / n2
+			elif partie == '%':
+				n1, n2, place = get_nbrs(place)
+				nbrs[place] = n1 % n2
+			else:
+				place += 1
+
+		place = 0
+		while nbrs.count('+') or nbrs.count('-'):
+			partie = nbrs[place]
+			if partie == '+':
+				n1, n2, place = get_nbrs(place)
+				nbrs[place] = n1 + n2
+			elif partie == '-':
+				n1, n2, place = get_nbrs(place)
+				nbrs[place] = n1 - n2
+			else:
+				place += 1
+
+		return nbrs[-1]
+
 	def parentheses(ss, equation):
 
 		while '(' in equation:
@@ -68,4 +99,4 @@ class Calcul:
 		
 		return ss.equation(equation)
 
-calc = Calcul()
+calcul = Calcul()
