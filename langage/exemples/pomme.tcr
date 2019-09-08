@@ -1,0 +1,23 @@
+|;#
+|;|N#Test
+|;|M#début
+|;|I#{
+    couleur "rouge"
+
+    verif_couleur :
+        if pomme == "rouge"
+            then
+                >get> "Oui !"
+            else
+                >get> "Non !"
+            
+    :
+
+    début :
+        acts
+            >set> pomme couleur
+            >set> resultat verif_couleur()
+            >get> r"La pomme est rouge ? #resultat#"
+    :
+
+}

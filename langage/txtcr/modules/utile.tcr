@@ -1,0 +1,41 @@
+|;#
+|;|N#utile
+|;|I#{
+	istype : (var)
+		acts
+			>typ> type var
+			>get> _type_in_types([type, types])
+	:
+	_type_in_types :
+		type inn types
+	:
+	split : (texte, sep)
+		if "" = texte
+			then 
+				>set> partie ""
+				>len> nbr_carac texte
+				>set> position +0
+				>set> _texte_coupé []
+				>get> _split_texte()
+			else
+				>aff> "Merci de mettre un str !"
+	:
+	_if_sep :
+		if sep == #texte|position#
+			then
+				>add> _texte_coupé partie
+				>set> partie ""
+			else
+				>add> partie #texte|position#
+	:
+	_split_texte :
+		if position !== nbr_carac
+			then
+				>get> _if_sep()
+				>add> position +1
+				>get> _split_texte()
+			else
+				>add> _texte_coupé partie
+				>get> _texte_coupé
+	:
+}
