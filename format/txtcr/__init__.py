@@ -12,26 +12,45 @@ def encode(data, **ops):
 class fichier:
 
 	def __init__(ss, chemin, mode='r'):
+
 		ss.chemin = chemin
 		ss.mode = mode
 
 	def __enter__(ss):
-		try:
-			fichier = open(ss.chemin, 'r')
-			ss.data = _decode(fichier.read())
-		except FileNotFoundError:
-			fichier = open(ss.chemin, 'w')
-			ss.data = _decode('<I#{}>')
 
-		fichier.close()
-
+		ss.data = ss.__open()
 		return ss.data
 
 	def __exit__(ss, exception_type,  exception_value,  retraçage):
+
 		if ss.mode == 'w':
-			#Test
-			_encode(ss.data)
-			#Enregistrement
+			ss.__save(ss.data)
+
+	def __open(ss):
+
+		try:
+			fichier = open(ss.chemin, 'r')
+			data = _decode(fichier.read())
+		except FileNotFoundError:
 			fichier = open(ss.chemin, 'w')
-			fichier.write(_encode(ss.data))
-			fichier.close()
+			data = _decode('<I#{}>')
+
+		fichier.close()
+
+		return data
+
+	def __save(ss, data):
+
+		#Encodde une fois avant pour voir si tout est bon
+		_encode(data)
+		#Enregistrement
+		fichier = open(ss.chemin, 'w')
+		fichier.write(_encode(data))
+		fichier.close()
+
+	def __call__(ss, data=None):
+
+		if not data:
+			return ss.__open()
+		else:
+			ss.__save(data)

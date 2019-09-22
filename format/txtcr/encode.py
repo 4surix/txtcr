@@ -12,7 +12,7 @@ def encode(data):
         return "'%s'" % config_echappemet(data).replace("'", "\\'")
 
     elif isinstance(data, (int, float)):
-        if py_str(data)[0] == '-':
+        if str(data)[0] == '-':
         	return "%s" % data
         else:
         	return "+%s" % data
@@ -39,7 +39,10 @@ def encode(data):
             return '0"%s"'%comm
 
     elif isinstance(data, none):
-        return 'O"%s"'(data.commentaire if 'commentaire' in dir(data) else '')
+        return 'O"%s"'%(data.commentaire if 'commentaire' in dir(data) else '')
+
+    elif type(data).__name__ == 'NoneType':
+        return 'O""' 
 
     elif is_class(data):
         clss = data.__class__
@@ -52,6 +55,8 @@ def encode(data):
                     'D#',
                     'R#',
                     'S#',
+                    'C#',
+                    'T#',
                     'I#'
         ]
 
@@ -59,6 +64,9 @@ def encode(data):
                 clss.__doc__, 
                 clss_info.get('__irepr__'),
                 clss_info.get('__istr__'),
-                encode({k:v for k,v in data.__dict__.items() if k[:2] != '__'})
+                clss_info.get('__cmdcode__'),
+                clss_info.get('__date__'),
+                encode({k:v for k,v in data.__dict__.items() if str(k)[:2] != '__'})
         ]
+
         return '<%s>'%' '.join(['%s%s'%(balise, info) for balise, info in zip(balises, infos) if info])

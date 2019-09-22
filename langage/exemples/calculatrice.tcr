@@ -1,30 +1,33 @@
-|;#
-|;|M#début
-|;|I#{
-    "+" =#n1#+#n2#
-    "-" =#n1#-#n2#
-    "*" =#n1#*#n2#
-    "/" =#n1#/#n2#
+{
+    "+" =n1 + n2;
+    "-" =n1 - n2;
+    "*" =n1 * n2;
+    "/" =n1 / n2;
 
     run 1""
 
-    continuer : #choix|+0# == "o" :
+    continuer : #choix +0#| == "o" :|
 
-    calculette :
-        if run == 1""
+    convertion : ("n")
+        if #n +0#| == "-"
+        then
+            ~cvt ("neg" n)
+        else
+            ~cvt ("pos" n)
+    :|
+
+    calculette : run == 1""
             then
-                >ped> op "Choisissez l'opération \: "
-                >ped> n1 "Nombre 1 \: "
-                >ped> n2 "Nombre 2 \: "
-                >set> calc #op#
-                >aff> calc()
-                >ped> choix "On continue ? "
-                >set> run continuer()
-                <get< calculette()
-    :
-
-    début :
-        acts
-            <get< calculette()
-    :
+                ped op "Choisissez l'opération : "
+                ped n1 "Nombre 1 : "
+                ped n2 "Nombre 2 : "
+                set n1 convertion(n1) n2 convertion(n2)
+                set calc #op#|
+                aff calc()
+                ped choix "On continue ? "
+                set run continuer()
+                get calculette()
+    :|
 }
+
+calculette()

@@ -95,14 +95,14 @@ class Conteneur:
 
         if is_class(ss.value) and '__irepr__' in dir(ss.value):
 
-            if ss.key:
+            if ss.key != '':
                 ss.value[ss.key] = value
                 ss.key = ''
             else:
                 ss.key = value
 
         elif isinstance(ss.value, dict):
-            if ss.key:
+            if ss.key != '':
                 ss.value[ss.key] = value
                 ss.key = ''
             else:
@@ -165,7 +165,7 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             key = ''
             if conteneur.ancien_conteneur:
-                key = conteneur.ancien_conteneur.key[:]
+                key = conteneur.ancien_conteneur.key
 
             if conteneur.texte:
                 conteneur.end()

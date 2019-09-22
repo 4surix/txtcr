@@ -1,5 +1,15 @@
 from ._utile import *
 
+# Nbr --------------------------------------------------------
+
+def mk_nbr(texte):
+
+    if ',' in texte: nbr = float(texte.replace(',', '.'))
+    elif '.' in texte: nbr = float(texte)
+    else: nbr = int(texte)
+
+    return nbr
+
 # Bool -------------------------------------------------------
 
 class bool:
@@ -55,6 +65,8 @@ def new_clss():
             ss.__class__.__name__ = ''
             ss.__class__.__istr__ = None
             ss.__class__.__irepr__ = None
+            ss.__class__.__cmdcode__ = None
+            ss.__class__.__date__ = None
 
         def __len__(ss):
             return len(ss.__dict__)
@@ -81,6 +93,8 @@ def new_clss():
                         D=clss.__doc__,
                         S=clss.__istr__,
                         R=clss.__irepr__,
+                        C=clss.__cmdcode__,
+                        T=clss.__date__,
                         I=ss
                         )
 
@@ -97,6 +111,10 @@ def new_clss():
                 ss.__class__.__irepr__ = value
             elif key == 'S#':
                 ss.__class__.__istr__ = value
+            elif key == "C#":
+                ss.__class__.__cmdcode__ = value
+            elif key == "T#":
+                ss.__class__.__date__ = value
             elif key == "I#":
                 for key, value in value.items():
                     ss.__dict__[key] = value
@@ -107,9 +125,17 @@ def new_clss():
             for item in ss.__dict__:
                 yield item
 
+        def keys(ss):
+            for key in ss.__dict__.keys():
+                yield key
+
+        def values(ss):
+            for value in ss.__dict__.values():
+                yield value
+
         def get(ss, item, defaut=None):
 
-            if item not in ['N#', 'D#', 'R#', 'S#']:
+            if item not in ['N#', 'D#', 'R#', 'S#', 'C#', 'T#']:
                 value = ss.__dict__.get(item, defaut)
 
             elif item == 'N#':
@@ -132,11 +158,21 @@ def new_clss():
                 if not value:
                     value = defaut
 
+            elif item == 'C#':
+                value = ss.__class__.__cmdcode__ 
+                if not value:
+                    value = defaut
+
+            elif item == 'T#':
+                value = ss.__class__.__date__ 
+                if not value:
+                    value = defaut
+
             return value
 
         def getnew(ss, item, nouv=None):
 
-            if item not in ['N#', 'D#', 'R#', 'S#']:
+            if item not in ['N#', 'D#', 'R#', 'S#', 'C#', 'T#']:
                 value = ss.__dict__.setdefault(item, nouv)
 
             elif item == 'N#':
@@ -161,6 +197,18 @@ def new_clss():
                 value = ss.__class__.__istr__ 
                 if not value:
                     ss.__class__.__istr__ = nouv
+                    value = nouv
+
+            elif item == 'C#':
+                value = ss.__class__.__cmdcode__ 
+                if not value:
+                    ss.__class__.__cmdcode__ = nouv
+                    value = nouv
+
+            elif item == 'T#':
+                value = ss.__class__.__date__ 
+                if not value:
+                    ss.__class__.__date__ = nouv
                     value = nouv
 
             return value

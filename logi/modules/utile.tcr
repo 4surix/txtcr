@@ -1,0 +1,64 @@
+{
+	"None" O""
+	"True" 1""
+	"False" 0""
+
+	"str" : ("obj")
+		if 
+			type(obj) == "str"
+		then
+			get obj
+		else
+			~cvt ("str" obj)
+	:|
+
+	"pos" : ("obj")
+		if 
+			type(obj) == "pos"
+		then
+			get obj
+		else
+			~cvt ("pos" obj)
+	:|
+
+	"neg" : ("obj")
+		if 
+			type(obj) == "neg"
+		then
+			get obj
+		else
+			~cvt ("neg" obj)
+	:|
+
+	"type" : ("obj")
+		acts ~typ obj
+	:|
+	//
+		Sépare un texte par apport à UN caractére
+		separer(str, str) -> list de str
+	//
+	"separer" : ("texte" "sep")
+		if (sep = "") & (texte = "")
+		then
+			len taille_texte texte
+			set texte_sep []
+				caracs ""
+				position +0
+			get :
+					if #texte position#| !== sep
+					then
+						add (caracs #texte position#|)
+							(position +1)
+					else
+						add (texte_sep caracs)
+							(position +1)
+						set caracs ""
+					up taille_texte > position
+				:|
+			//Caractére restants non renregistré//
+			add (texte_sep caracs)
+			get texte_sep
+		else
+			err "Variable 'texte' et 'sep' doit être de type str !"
+	:|
+}

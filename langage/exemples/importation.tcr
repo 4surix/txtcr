@@ -1,6 +1,5 @@
-<#math#>
+﻿<#math#|>
 
-syracuse((+7))
+syracuse(+7)
 
-: O"Test" == O"Test" :
-
+: O"Test" == O"Test" :|

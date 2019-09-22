@@ -1,24 +1,24 @@
-|;#
-|;|M#début
-|;|I#{
-
-    cond_avec_2_sorties :
+{
+    "cond_avec_2_sorties" :
         acts
-            <typ< "Pomme"
-            <ale< (+1 +10)
-            <ale< (+2 +8 +2) 
-    :
-    cond_avec_1_sorties :
+            ~typ "Pomme"
+            ~ale (+1 +10)
+            ~ale (+2 +8 +2) 
+    :|
+    "cond_avec_1_sorties" :
         acts
-            <now< ("h", "s")
-    :
-    début :
+            ~now ("h", "s")
+    :|
+    "début" :
         acts
-            >set> pomme cond_avec_2_sorties()
-            >set> poire cond_avec_1_sorties()
-            <typ< pomme poire
-            <get< #pomme|"ale"|+0#
-            <get< #pomme|+0#
-            <get< #pomme|+1#
-    :
+            set pomme cond_avec_2_sorties()
+            set poire cond_avec_1_sorties()
+            ~typ pomme poire
+            get #pomme "ale"#|
+            get #pomme "ale" +0#|
+            get #pomme +0#|
+            get #pomme +1#|
+    :|
 }
+
+début()
