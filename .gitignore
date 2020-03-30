@@ -106,3 +106,8 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+
+.idea/
+DebugUtils/
+txtcr/version.py
