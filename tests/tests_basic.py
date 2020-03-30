@@ -4,6 +4,10 @@ import datetime
 
 
 class BasicTests(unittest.TestCase):
+    """
+    The basic tests for the TCR module.
+    More aimed tests can be found in other files, in order to add more coverage to the code
+    """
 
     #
     # CLASSES INHERITANCE: GLOBAL COMPARISON
@@ -98,25 +102,32 @@ class BasicTests(unittest.TestCase):
     #
     def test_file(self):
         filepath = 'fichier.tcr'
+        backuppath = 'tests/fichier.tcr'
 
-        # Concentrating on editing and "compiling"
-        with txtcr.fichier(filepath, 'w') as tcr:
-            tcr.pomme = "rouge"
-            tcr.poire = "jaune"
+        def test(path):
+            # Concentrating on editing and "compiling"
+            with txtcr.fichier(path, 'w') as tcr:
+                tcr.pomme = "rouge"
+                tcr.poire = "jaune"
 
-        self.assertEqual("<:TCR: File Test>", str(tcr), msg="File compiling in TCR")
+            self.assertEqual("<:TCR: File Test>", str(tcr), msg="File compiling in TCR")
 
-        # Concentrating on what was saved in the file
-        with txtcr.fichier(filepath, 'w') as tcr2:
-            tcr.pomme = "mangée"
-            tcr2.poire = "pourrie"
+            # Concentrating on what was saved in the file
+            with txtcr.fichier(path, 'w') as tcr2:
+                tcr.pomme = "mangée"
+                tcr2.poire = "pourrie"
 
-        with open(filepath, 'r') as f:
-            c = f.read()
+            with open(path, 'r') as f:
+                c = f.read()
 
-        self.assertEqual('<N#"File Test" I#{"pomme" "rouge" "poire" "pourrie"}>',
-                         c,
-                         msg="File: comparing saved TCR to expected")
+            self.assertEqual('<N#"File Test" I#{"pomme" "rouge" "poire" "pourrie"}>',
+                             c,
+                             msg="File: comparing saved TCR to expected")
+
+        try:
+            test(filepath)
+        except FileNotFoundError:
+            test(backuppath)
 
 
 if __name__ == '__main__':
