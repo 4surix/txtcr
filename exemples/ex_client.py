@@ -9,7 +9,7 @@ import random
 import asyncio
 import websockets
 
-from txtcr.requete import *  # Client, Seveur, POST, GET, ...
+from txtcr.requete import *  # Requetes, POST, GET, ...
 from aioconsole import ainput
 
 

@@ -3,6 +3,7 @@ from .types import *
 from .encode import encode
 from functools import partial
 
+
 class Conteneur:
 
     def __init__(self, ancien_conteneur, value, _clss=None):

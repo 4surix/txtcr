@@ -5,9 +5,12 @@ from ._utile import *
 
 def mk_nbr(texte):
 
-    if ',' in texte: nbr = float(texte.replace(',', '.'))
-    elif '.' in texte: nbr = float(texte)
-    else: nbr = int(texte)
+    if ',' in texte: 
+        nbr = float(texte.replace(',', '.'))
+    elif '.' in texte: 
+        nbr = float(texte)
+    else: 
+        nbr = int(texte)
 
     return nbr
 
@@ -81,28 +84,34 @@ def new_clss(encode):
 
         def __init__(self, encode):
 
-            self.encode__ = encode
+            clss.encode__ = encode
 
-            self.str__ = None
-            self.repr__ = None
-            self.cmdcode__ = None
-            self.date__ = None
+            clss.str__ = None
+            clss.repr__ = None
+            clss.cmdcode__ = None
+            clss.date__ = None
+            clss.hash__ = None
 
-            self.name__ = self.__class__.__name__ = ''
-            self.doc__ = self.__class__.__doc__
+            clss.name__ = clss.__name__ = ''
+            clss.doc__ = clss.__doc__
 
         def __len__(self):
+
             return len(self.__dict__)
 
         def __str__(self):
-            istr = self.str__
+
+            istr = clss.str__
+
             if istr:
                 return self.__format(istr)
             else:
-                return '<:TCR: %s>' % self.name__
+                return '<:TCR: %s>' % clss.name__
 
-        def __repr__(self): 
-            irepr = self.repr__
+        def __repr__(self):
+
+            irepr = clss.repr__
+
             if irepr:
                 return self.__format(irepr)
             else:
@@ -111,40 +120,42 @@ def new_clss(encode):
         def __format(self, texte):
 
             return texte.format(**{
-                'N#': self.__class__.__name__,
-                'D#': self.__class__.__doc__,
-                'S#': self.str__,
-                'R#': self.repr__,
-                'C#': self.cmdcode__,
-                'T#': self.date__,
+                'N#': clss.name__,
+                'D#': clss.doc__,
+                'S#': clss.str__,
+                'R#': clss.repr__,
+                'C#': clss.cmdcode__,
+                'T#': clss.date__,
+                'H#': clss.hash__,
                 'I#': self
             })
 
         def __getitem__(self, item):
+
             return self.__dict__[item]
 
         def __setitem__(self, item, value):
 
             if item == "N#":
-                self.__class__.__name__ = self.name__ = value
+                clss.name__ = value
 
             elif item == "D#":
-                self.__class__.__doc__ = self.doc__ = value
+                clss.doc__ = value
 
             elif item == 'R#':
-                self.repr__ = '"%s"' % value
+                clss.repr__ = value
 
             elif item == 'S#':
-                self.str__ = '"%s"' % value
+                clss.str__ = value
 
             elif item == "C#":
-                self.cmdcode__ = value
+                clss.cmdcode__ = value
 
             elif item == "T#":
-                self.date__ = value
+                clss.date__ = value
 
             elif item == "H#":
-                self.hash__ = value
+                clss.hash__ = value
 
             elif item == "I#":
                 for item, value in value.items():
@@ -154,29 +165,31 @@ def new_clss(encode):
                 self.__dict__[item] = value
 
         def __delitem__(self, item):
+
             del self.__dict__[item]
 
         def __iter__(self):
+
             for item in self.__dict__:
                 yield item
 
         def keys(self):
+
             for key in self.__dict__.keys():
-                if str(key)[-2:] != '__':
-                    yield key
+                yield key
 
         def values(self):
+
             for key, value in self.__dict__.items():
-                if str(key)[-2:] != '__':
-                    yield value
+                yield value
 
         def items(self):
+
             for key, value in self.__dict__.items():
-                if str(key)[-2:] != '__':
-                    yield key, value
+                yield key, value
 
         def encode(self):
-            return self.encode__(self)
+            return clss.encode__(self)
 
         def get(self, item, defaut=None):
 
@@ -191,13 +204,13 @@ def new_clss(encode):
             }.get(item)
 
             if value:
-                value = self.__dict__.get(value)
+                value = getattr(clss, value, None)
                 if value is None:
                     value = defaut
                 return value
 
             elif item == 'I#':
-                value = {k:v for k, v in self.__dict__.items() if str(k)[-2:] != '__'}
+                value = {k:v for k, v in self.__dict__.items()}
                 if not value:
                     value = defaut
 
@@ -219,9 +232,10 @@ def new_clss(encode):
             }.get(item)
 
             if value:
-                value = self.__dict__.get(value)
-                if not value:
-                    self.__dict__[item] = value = defaut
+                value = getattr(clss, value, None)
+                if value is None:
+                    setattr(clss, value, defaut)
+                    value = defaut
                 return value
 
             elif item == 'I#':
@@ -229,7 +243,7 @@ def new_clss(encode):
                     for k, v in defaut.items():
                         self.__dict__[k] = v
 
-                return {k:v for k, v in self.__dict__.items() if str(k)[-2:] != '__'}
+                return {k:v for k, v in self.__dict__.items()}
 
             else:
                 value = self.__dict__.setdefault(item, defaut)

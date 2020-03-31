@@ -88,6 +88,7 @@ def encode(data, *, profondeur=-1, indent=0):
             'S#',
             'C#',
             'T#',
+            'H#',
             'I#'
         ]
 
@@ -96,12 +97,13 @@ def encode(data, *, profondeur=-1, indent=0):
         encode_ = lambda v: None if v is None else encode(v, profondeur=profondeur, indent=indent)
 
         valeurs = [
-                encode_(clss.__name__),
-                encode_(clss.__doc__),
+                encode_(clss.__name__ or None),
+                encode_(clss.__doc__ or None),
                 encode_(getattr(data, 'repr__', None)),
                 encode_(getattr(data, 'str__', None)),
                 encode_(getattr(data, 'cmdcode__', None)),
                 encode_(getattr(data, 'date__',  None)),
+                encode_(getattr(data, 'hash__',  None)),
                 encode_({k:v for k,v in data.__dict__.items() if str(k)[-2:] != '__'})
         ]
 

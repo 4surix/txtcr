@@ -2,7 +2,7 @@ import txtcr
 import asyncio
 import websockets
 
-from txtcr.requete import *  # Client, Serveur, POST, GET, ...
+from txtcr.requete import *  # Requetes, POST, GET, ...
 
 
 class INFO:
