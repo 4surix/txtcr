@@ -44,7 +44,7 @@ class BasicTests(unittest.TestCase):
 
         test = txtcr.decode(txtcr.encode(TestClass))
 
-        self.assertEqual("\"TestClass\"", str(test))
+        self.assertEqual("TestClass", str(test))
 
     def test_inherit_strClass_print_content(self):
         class TestClass(txtcr.param.S["{I#.pomme}"]):
@@ -54,7 +54,7 @@ class BasicTests(unittest.TestCase):
 
         test = txtcr.decode(txtcr.encode(TestClass))
 
-        self.assertEqual("\"rouge\"", str(test))
+        self.assertEqual("rouge", str(test))
 
     #
     # CLASSES INHERITANCE: REPR SPECIALS
@@ -65,7 +65,7 @@ class BasicTests(unittest.TestCase):
 
         test = txtcr.decode(txtcr.encode(TestClass))
 
-        self.assertEqual("\"TestClass\"", repr(test))
+        self.assertEqual("TestClass", repr(test))
 
     def test_inherit_reprClass_print_content(self):
         class TestClass(txtcr.param.R["{I#.pomme}"]):
@@ -75,7 +75,7 @@ class BasicTests(unittest.TestCase):
 
         test = txtcr.decode(txtcr.encode(TestClass))
 
-        self.assertEqual("\"rouge\"", repr(test))
+        self.assertEqual("rouge", repr(test))
 
     #
     # EMBEDDED CLASS WITH INHERITANCE
@@ -107,6 +107,7 @@ class BasicTests(unittest.TestCase):
         def test(path):
             # Concentrating on editing and "compiling"
             with txtcr.fichier(path, 'w') as tcr:
+                tcr["N#"] = "File Test"
                 tcr.pomme = "rouge"
                 tcr.poire = "jaune"
 
@@ -114,13 +115,14 @@ class BasicTests(unittest.TestCase):
 
             # Concentrating on what was saved in the file
             with txtcr.fichier(path, 'w') as tcr2:
-                tcr.pomme = "mangée"
+                tcr2["N#"] = "File Test"
+                tcr2.pomme = "mangée"
                 tcr2.poire = "pourrie"
 
-            with open(path, 'r') as f:
+            with open(path, 'r', encoding='utf-8') as f:
                 c = f.read()
 
-            self.assertEqual('<N#"File Test" I#{"pomme" "rouge" "poire" "pourrie"}>',
+            self.assertEqual('<N#"File Test" I#{"pomme" "mangée" "poire" "pourrie"}>',
                              c,
                              msg="File: comparing saved TCR to expected")
 

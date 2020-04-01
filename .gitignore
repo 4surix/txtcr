@@ -111,3 +111,4 @@ venv.bak/
 .idea/
 DebugUtils/
 txtcr/version.py
+bin/log.txt
