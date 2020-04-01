@@ -1,2 +1,0 @@
-#!/bin/bash
-python3.7 -m unittest discover -v -s ../tests 1>>log.txt 2>&1
