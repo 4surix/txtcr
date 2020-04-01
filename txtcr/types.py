@@ -92,8 +92,7 @@ def new_clss(encode):
             clss.date__ = None
             clss.hash__ = None
 
-            clss.name__ = clss.__name__ = ''
-            clss.doc__ = clss.__doc__
+            clss.__name__ = ''
 
         def __len__(self):
 
@@ -106,7 +105,7 @@ def new_clss(encode):
             if istr:
                 return self.__format(istr)
             else:
-                return '<:TCR: %s>' % clss.name__
+                return '<:TCR: %s>' % clss.__name__
 
         def __repr__(self):
 
@@ -120,8 +119,8 @@ def new_clss(encode):
         def __format(self, texte):
 
             return texte.format(**{
-                'N#': clss.name__,
-                'D#': clss.doc__,
+                'N#': clss.__name__,
+                'D#': clss.__doc__,
                 'S#': clss.str__,
                 'R#': clss.repr__,
                 'C#': clss.cmdcode__,
@@ -137,10 +136,10 @@ def new_clss(encode):
         def __setitem__(self, item, value):
 
             if item == "N#":
-                clss.name__ = value
+                clss.__name__ = value
 
             elif item == "D#":
-                clss.doc__ = value
+                clss.__doc__ = value
 
             elif item == 'R#':
                 clss.repr__ = value
@@ -194,8 +193,8 @@ def new_clss(encode):
         def get(self, item, defaut=None):
 
             value = {
-                'N#': 'name__',
-                'D#': 'doc__',
+                'N#': '__name__',
+                'D#': '__doc__',
                 'R#': 'repr__',
                 'S#': 'str__',
                 'C#': 'cmdcode__',
@@ -222,8 +221,8 @@ def new_clss(encode):
         def setdefault(self, item, defaut=None):
 
             value = {
-                'N#': 'name__',
-                'D#': 'doc__',
+                'N#': '__name__',
+                'D#': '__doc__',
                 'R#': 'repr__',
                 'S#': 'str__',
                 'C#': 'cmdcode__',
