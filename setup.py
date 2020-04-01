@@ -79,8 +79,7 @@ def setup_package():
         ],
 
         python_requires='>=3.6',
-        zip_safe=False,
-        scripts=['bin/runtests']
+        zip_safe=False
     )
 
 
