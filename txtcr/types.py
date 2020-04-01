@@ -1,23 +1,20 @@
 from ._utile import *
 
 
-### Nbr
-
+# Nbr
 def mk_nbr(texte):
-
-    if ',' in texte: 
+    if ',' in texte:
         nbr = float(texte.replace(',', '.'))
-    elif '.' in texte: 
+    elif '.' in texte:
         nbr = float(texte)
-    else: 
+    else:
         nbr = int(texte)
 
     return nbr
 
 
-### Bool
-
-class bool:
+# Bool
+class TCRBool:
 
     def __init__(self, value, commentaire=''):
         self.value = value
@@ -32,84 +29,76 @@ class bool:
     def __ne__(self, obj):
         return self.value != obj
 
-
     def __str__(self):
-        return '%s%s' % (self.value,' #'+self.commentaire if self.commentaire else '')
+        return '%s%s' % (self.value, ' #' + self.commentaire if self.commentaire else '')
 
     def __repr__(self):
         return '%s' % self.value
 
-
-    def __index__(self): 
-        return self.value*1
+    def __index__(self):
+        return self.value * 1
 
     def __hash__(self):
         return hash(self.value)
 
 
-### None
-
-class none:
+# None
+class TCRNone:
 
     def __init__(self, commentaire=''):
         self.commentaire = commentaire
-
 
     def __bool__(self):
         return False
 
     def __eq__(self, obj):
-        return None == obj
+        return obj is None
 
     def __ne__(self, obj):
-        return None != obj
-
+        return obj is not None
 
     def __str__(self):
-        return 'None%s' % (' #'+self.commentaire if self.commentaire else '')
+        return 'None%s' % (' #' + self.commentaire if self.commentaire else '')
 
     def __repr__(self):
         return '%s' % None
-
 
     def __hash__(self):
         return hash(None)
 
 
-### Clss
-
+# Class
 def new_clss(encode):
+    class Clss:
 
-    class clss:
+        str__ = None
+        repr__ = None
+        cmdcode__ = None
+        date__ = None
+        hash__ = None
+        encode__ = None
 
-        def __init__(self, encode):
+        __name__ = ''
 
-            clss.encode__ = encode
+        def __init__(self, encode_):
 
-            clss.str__ = None
-            clss.repr__ = None
-            clss.cmdcode__ = None
-            clss.date__ = None
-            clss.hash__ = None
-
-            clss.__name__ = ''
+            Clss.encode__ = encode_
 
         def __len__(self):
-
             return len(self.__dict__)
 
         def __str__(self):
 
-            istr = clss.str__
+            istr = Clss.str__
 
             if istr:
                 return self.__format(istr)
             else:
-                return '<:TCR: %s>' % clss.__name__
+                return '<:TCR: %s>' % Clss.__name__
 
         def __repr__(self):
 
-            irepr = clss.repr__
+            irepr = Clss.repr__
 
             if irepr:
                 return self.__format(irepr)
@@ -119,13 +108,13 @@ def new_clss(encode):
         def __format(self, texte):
 
             return texte.format(**{
-                'N#': clss.__name__,
-                'D#': clss.__doc__,
-                'S#': clss.str__,
-                'R#': clss.repr__,
-                'C#': clss.cmdcode__,
-                'T#': clss.date__,
-                'H#': clss.hash__,
+                'N#': Clss.__name__,
+                'D#': Clss.__doc__,
+                'S#': Clss.str__,
+                'R#': Clss.repr__,
+                'C#': Clss.cmdcode__,
+                'T#': Clss.date__,
+                'H#': Clss.hash__,
                 'I#': self
             })
 
@@ -136,25 +125,25 @@ def new_clss(encode):
         def __setitem__(self, item, value):
 
             if item == "N#":
-                clss.__name__ = value
+                Clss.__name__ = value
 
             elif item == "D#":
-                clss.__doc__ = value
+                Clss.__doc__ = value
 
             elif item == 'R#':
-                clss.repr__ = value
+                Clss.repr__ = value
 
             elif item == 'S#':
-                clss.str__ = value
+                Clss.str__ = value
 
             elif item == "C#":
-                clss.cmdcode__ = value
+                Clss.cmdcode__ = value
 
             elif item == "T#":
-                clss.date__ = value
+                Clss.date__ = value
 
             elif item == "H#":
-                clss.hash__ = value
+                Clss.hash__ = value
 
             elif item == "I#":
                 for item, value in value.items():
@@ -188,7 +177,7 @@ def new_clss(encode):
                 yield key, value
 
         def encode(self):
-            return clss.encode__(self)
+            return Clss.encode__(self)
 
         def get(self, item, defaut=None):
 
@@ -203,13 +192,13 @@ def new_clss(encode):
             }.get(item)
 
             if value:
-                value = getattr(clss, value, None)
+                value = getattr(Clss, value, None)
                 if value is None:
                     value = defaut
                 return value
 
             elif item == 'I#':
-                value = {k:v for k, v in self.__dict__.items()}
+                value = {k: v for k, v in self.__dict__.items()}
                 if not value:
                     value = defaut
 
@@ -231,9 +220,9 @@ def new_clss(encode):
             }.get(item)
 
             if value:
-                value = getattr(clss, value, None)
+                value = getattr(Clss, value, None)
                 if value is None:
-                    setattr(clss, value, defaut)
+                    setattr(Clss, value, defaut)
                     value = defaut
                 return value
 
@@ -242,11 +231,11 @@ def new_clss(encode):
                     for k, v in defaut.items():
                         self.__dict__[k] = v
 
-                return {k:v for k, v in self.__dict__.items()}
+                return {k: v for k, v in self.__dict__.items()}
 
             else:
                 value = self.__dict__.setdefault(item, defaut)
 
             return value
 
-    return clss(encode)
+    return Clss(encode)

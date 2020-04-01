@@ -1,4 +1,3 @@
-
 py_str = str
 py_bool = bool
 
@@ -9,10 +8,9 @@ balises_types = ['<', '{', '[', '(', '"', "'", '+', '-', '1', '0', 'O', '/']
 
 chiffres = list('0123456789')
 
-caracs_str_simplifié = list('abcdefghijklmnopqrstuvwxyz0123456789_')
+chars_to_str = list('abcdefghijklmnopqrstuvwxyz0123456789_')
 
 
-def is_class(objet):
-    if '__dict__' in dir(objet.__class__):
-        if '__dict__' in objet.__class__.__dict__:
-            return True
+def is_class(obj):
+    if '__dict__' in dir(obj.__class__) and '__dict__' in obj.__class__.__dict__:
+        return True

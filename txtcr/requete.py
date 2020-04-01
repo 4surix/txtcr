@@ -7,7 +7,7 @@ from .decode import decode
 
 
 class Requetes:
-    
+
     def __init__(self):
         self._requetes = {}
 
@@ -17,21 +17,21 @@ class Requetes:
 
         def _recup_func(function):
 
-            name = _recup_func.name
-            cmd = _recup_func.cmd
+            name_ = _recup_func.name
+            cmd_ = _recup_func.cmd
 
-            if name is None:
-                name = function.__name__
+            if name_ is None:
+                name_ = function.__name__
 
             # Requêtes spéciales sans cmd
-            if name in ['_OTHER', '_EXCEPTION', '_ALL']:
-                self._requetes[name] = function
+            if name_ in ['_OTHER', '_EXCEPTION', '_ALL']:
+                self._requetes[name_] = function
                 return function
 
-            if name not in self._requetes:
-                self._requetes[name] = {}
+            if name_ not in self._requetes:
+                self._requetes[name_] = {}
 
-            self._requetes[name][cmd] = function
+            self._requetes[name_][cmd_] = function
 
             return function
 
@@ -53,9 +53,8 @@ class Requetes:
                 for r in result:
                     returns.append(r)
 
-            elif result != None:
+            elif result is not None:
                 returns.append(result)
-
 
         for requete in requetes:
 
@@ -67,8 +66,8 @@ class Requetes:
 
             if func:
                 # Appel de la fonction correspondant à la commande
-                return_(await self.__call_fonc(func, 
-                    requete, *args, **info, **kwargs))
+                return_(await self.__call_fonc(func,
+                                               requete, *args, **info, **kwargs))
 
             else:
                 # Si la commande n'existe pas ou n'a pas été definie
@@ -77,28 +76,26 @@ class Requetes:
                 func_autre = self._requetes.get('_OTHER')
 
                 if func_autre:
-                    return_(await self.__call_fonc(func_autre, 
-                        requete, cmd, nom, *args, **info, **kwargs))
+                    return_(await self.__call_fonc(func_autre,
+                                                   requete, cmd, nom, *args, **info, **kwargs))
 
             # Pour la fonction spécial appelée pour toute sorte de requête
             func_all = self._requetes.get('_ALL')
 
             if func_all:
-                return_(await self.__call_fonc(func_all, 
-                    requete, cmd, nom, *args, **info, **kwargs))
-
+                return_(await self.__call_fonc(func_all,
+                                               requete, cmd, nom, *args, **info, **kwargs))
 
         return ''.join([encode(r) for r in returns]) if returns else None
 
     async def __call_fonc(self, fonction, requete, *args, **kwargs):
 
         async def call():
-            if (asyncio.iscoroutine(fonction) 
-            or asyncio.iscoroutinefunction(fonction)):
+            if (asyncio.iscoroutine(fonction)
+                    or asyncio.iscoroutinefunction(fonction)):
                 return await fonction(requete, *args, **kwargs)
             else:
                 return fonction(requete, *args, **kwargs)
-
 
         func_except = self._requetes.get('_EXCEPTION')
 
@@ -109,15 +106,14 @@ class Requetes:
             except Exception as e:
                 exception = (e.__class__.__name__, str(e))
                 suivis = traceback.format_exc()
-                return await self.__call_fonc(func_except, 
-                    requete, exception, suivis, *args, **kwargs)
+                return await self.__call_fonc(func_except,
+                                              requete, exception, suivis, *args, **kwargs)
 
         else:
             return await call()
 
 
-### Raccourcis
-
+# Raccourcis
 class GET:
     cmdcode__ = 'GET'
 
@@ -141,8 +137,10 @@ class OPTIONS:
 class RESPONSE:
 
     def __getitem__(self, item):
-        class RESPONSE:
+        class Response:
             cmdcode__ = item
-        return RESPONSE
-    
+
+        return Response
+
+
 RESPONSE = RESPONSE()

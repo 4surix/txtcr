@@ -3,12 +3,12 @@ import txtcr
 
 print("-"*30)
 
-class Pouf(txtcr.param.S["{N#}"]):
+class Pouf(txtcr.Param.S["{N#}"]):
     pomme = "rouge"
     nombre = 10
     fraise = ["rouge", "blanche"]
 
-class Pouet(txtcr.param.S["<{I#.pouf}>"]):
+class Pouet(txtcr.Param.S["<{I#.pouf}>"]):
     pouf = Pouf
     patapouf = True   
 
@@ -49,7 +49,7 @@ for _ in range(3):
 print("-"*30)
 
 # L'ouverture de fichier
-with txtcr.fichier('fichier.tcr', 'w', indent=4) as tcr:
+with txtcr.Fichier('fichier.tcr', 'w', indent=4) as tcr:
     tcr.pomme = "rouge"
     tcr.poire = "jaune"
     #Enregistrement automatique

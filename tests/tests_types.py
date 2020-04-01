@@ -12,27 +12,27 @@ class TypesTests(unittest.TestCase):
     # bool class
     #
     def test_bool_class_init(self):
-        b = t.bool(True, "this is a comment")
+        b = t.TCRBool(True, "this is a comment")
 
         self.assertEqual(True, b.value, msg="Value")
         self.assertEqual("this is a comment", b.commentaire, msg="Comment")
 
     def test_bool_class_bool_eq_ne(self):
-        b = t.bool(True)
+        b = t.TCRBool(True)
 
         self.assertEqual(True, bool(b), msg="__bool__")
         self.assertEqual(True, b == True, msg="__eq__")
         self.assertEqual(True, b != False, msg="__ne__")
 
     def test_bool_class_str_repr(self):
-        b = t.bool(False, "false this time")
+        b = t.TCRBool(False, "false this time")
 
         self.assertEqual('False', repr(b), msg="__repr__")
         self.assertEqual('False #false this time', str(b), msg="__str__")
 
     def test_bool_class_index_hash(self):
-        b = t.bool(True)
-        c = t.bool(False)
+        b = t.TCRBool(True)
+        c = t.TCRBool(False)
 
         # Indexes
         self.assertEqual(1, b.__index__(), msg="TCRBool(True) index")
@@ -46,25 +46,25 @@ class TypesTests(unittest.TestCase):
     # none class
     #
     def test_none_class_init(self):
-        n = t.none("this is a comment")
+        n = t.TCRNone("this is a comment")
 
         self.assertEqual("this is a comment", n.commentaire)
 
     def test_none_class_bool_eq_ne(self):
-        n = t.none()
+        n = t.TCRNone()
 
         self.assertEqual(False, bool(n), msg="__bool__")
         self.assertEqual(True, n == None, msg="__eq__")
         self.assertEqual(True, n != 2, msg="__ne__")
 
     def test_none_class_str_repr(self):
-        n = t.none("another comment")
+        n = t.TCRNone("another comment")
 
         self.assertEqual('None', repr(n), msg="__repr__")
         self.assertEqual('None #another comment', str(n), msg="__str__")
 
     def test_none_class_hash(self):
-        n = t.none()
+        n = t.TCRNone()
 
         self.assertEqual(hash(None), hash(n))
 
