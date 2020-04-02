@@ -106,7 +106,7 @@ class BasicTests(unittest.TestCase):
 
         def test(path):
             # Concentrating on editing and "compiling"
-            with txtcr.Fichier(path, 'w') as tcr:
+            with txtcr.file(path, 'w') as tcr:
                 tcr["N#"] = "File Test"
                 tcr.pomme = "rouge"
                 tcr.poire = "jaune"
@@ -114,7 +114,7 @@ class BasicTests(unittest.TestCase):
             self.assertEqual("<:TCR: File Test>", str(tcr), msg="File compiling in TCR")
 
             # Concentrating on what was saved in the file
-            with txtcr.Fichier(path, 'w') as tcr2:
+            with txtcr.file(path, 'w') as tcr2:
                 tcr2["N#"] = "File Test"
                 tcr2.pomme = "mangée"
                 tcr2.poire = "pourrie"
