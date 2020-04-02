@@ -1,4 +1,4 @@
-from .types import *
+from txtcr.core.types import *
 
 
 def config_indent(profondeur, indent):
@@ -6,21 +6,25 @@ def config_indent(profondeur, indent):
             if indent else '')
 
 
+# Chars escaping
 def config_echappement(data):
     return data.replace('\\', '\\\\').replace('\n', '\\n').replace('\t', '\\t')
 
 
+# Main encoding function
 def encode(data, *, profondeur=-1, indent=0):
-
     profondeur += 1
 
+    # String
     if isinstance(data, str):
         return '"%s"' % config_echappement(data).replace('"', '\\"')
 
+    # Bytes
     elif isinstance(data, bytes):
         return "'%s'" % config_echappement(data).replace("'", "\\'")
 
-    elif isinstance(data, (py_bool, bool)):
+    # Boolean
+    elif isinstance(data, (py_bool, TCRBool)):
         comm = ''
         if 'commentaire' in dir(data):
             comm = data.commentaire
@@ -38,9 +42,9 @@ def encode(data, *, profondeur=-1, indent=0):
         sep = _indent + ' '
 
         return (_indent
-                + '{' 
+                + '{'
                 + sep.join([' '.join([k, v]) for k, v in zip(keys, values)])
-                + _indent 
+                + _indent
                 + "}")
 
     elif isinstance(data, list):
@@ -50,24 +54,24 @@ def encode(data, *, profondeur=-1, indent=0):
         return (_indent
                 + '['
                 + sep.join([encode(value, profondeur=profondeur, indent=indent) for value in data])
-                + _indent 
+                + _indent
                 + ']')
 
     elif isinstance(data, tuple):
         _indent = config_indent(profondeur, indent)
         sep = _indent + ' '
 
-        return (_indent 
-                + '(' 
+        return (_indent
+                + '('
                 + sep.join([encode(value, profondeur=profondeur, indent=indent) for value in data])
-                + _indent 
+                + _indent
                 + ')')
 
-    elif isinstance(data, none):
-        return 'O"%s"' % data.commentaire 
+    elif isinstance(data, TCRNone):
+        return 'O"%s"' % data.commentaire
 
     elif type(data).__name__ == 'NoneType':
-        return 'O""' 
+        return 'O""'
 
     elif is_class(data):
 
@@ -75,13 +79,12 @@ def encode(data, *, profondeur=-1, indent=0):
 
         clss = data.__class__
         clss_info = clss.__dict__
-        
+
         if '__weakrefoffset__' in clss_info:
             clss = data
             clss_info = clss.__dict__
 
-
-        balises =  [
+        balises = [
             'N#',
             'D#',
             'R#',
@@ -94,30 +97,31 @@ def encode(data, *, profondeur=-1, indent=0):
 
         syntaxe = getattr(data, 'syntaxe__', 0)
 
-        encode_ = lambda v: None if v is None else encode(v, profondeur=profondeur, indent=indent)
+        def encode_symlink(value):
+            return None if value is None else encode(value, profondeur=profondeur, indent=indent)
 
         valeurs = [
-                encode_(clss.__name__ or None),
-                encode_(clss.__doc__ or None),
-                encode_(getattr(data, 'repr__', None)),
-                encode_(getattr(data, 'str__', None)),
-                encode_(getattr(data, 'cmdcode__', None)),
-                encode_(getattr(data, 'date__',  None)),
-                encode_(getattr(data, 'hash__',  None)),
-                encode_({k:v for k,v in data.__dict__.items() if str(k)[-2:] != '__'})
+            encode_symlink(clss.__name__ or None),
+            encode_symlink(clss.__doc__ or None),
+            encode_symlink(getattr(data, 'repr__', None)),
+            encode_symlink(getattr(data, 'str__', None)),
+            encode_symlink(getattr(data, 'cmdcode__', None)),
+            encode_symlink(getattr(data, 'date__', None)),
+            encode_symlink(getattr(data, 'hash__', None)),
+            encode_symlink({k: v for k, v in data.__dict__.items() if str(k)[-2:] != '__'})
         ]
 
         _indent = config_indent(profondeur, indent)
         sep = _indent + ' '
 
         return (_indent
-                + '<' 
+                + '<'
                 + sep.join(
-                    [balise + valeur 
-                     for balise, valeur in zip(balises, valeurs) 
+                    [balise + valeur
+                     for balise, valeur in zip(balises, valeurs)
                      if valeur is not None]
-                  )
-                + _indent 
+                )
+                + _indent
                 + '>')
 
     else:

@@ -75,7 +75,10 @@ def setup_package():
         maintainer_email='contact.biowolf@gmx.fr',
 
         packages=[
-            'txtcr'
+            'txtcr',
+            'txtcr.core',
+            'txtcr.util',
+            'txtcr.requests'
         ],
 
         python_requires='>=3.6',

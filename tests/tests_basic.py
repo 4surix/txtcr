@@ -13,14 +13,14 @@ class BasicTests(unittest.TestCase):
     # CLASSES INHERITANCE: GLOBAL COMPARISON
     #
     def test_inherit_strClass_print_full_class(self):
-        class TestClass(txtcr.param.S["<{I#.pouf}>"]):
+        class TestClass(txtcr.Param.S["<{I#.pouf}>"]):
             test = 10
 
         test = txtcr.encode(TestClass)
         self.assertEqual('<N#"TestClass" S#"<{I#.pouf}>" I#{"test" 10}>', test)
 
     def test_inherit_reprClass_print_full_class(self):
-        class TestClass(txtcr.param.R["<{I#.pouf}>"]):
+        class TestClass(txtcr.Param.R["<{I#.pouf}>"]):
             test = 10
 
         test = txtcr.encode(TestClass)
@@ -29,7 +29,7 @@ class BasicTests(unittest.TestCase):
     def test_inheritance_dateClass_print_full_class(self):
         date = str(datetime.datetime.today())
 
-        class TestClass(txtcr.param.T[date]):
+        class TestClass(txtcr.Param.T[date]):
             test = 10
 
         test = txtcr.encode(TestClass)
@@ -39,7 +39,7 @@ class BasicTests(unittest.TestCase):
     # CLASSES INHERITANCE: STR SPECIALS
     #
     def test_inherit_strClass_print_name(self):
-        class TestClass(txtcr.param.S["{N#}"]):
+        class TestClass(txtcr.Param.S["{N#}"]):
             pomme = "rouge"
 
         test = txtcr.decode(txtcr.encode(TestClass))
@@ -47,7 +47,7 @@ class BasicTests(unittest.TestCase):
         self.assertEqual("TestClass", str(test))
 
     def test_inherit_strClass_print_content(self):
-        class TestClass(txtcr.param.S["{I#.pomme}"]):
+        class TestClass(txtcr.Param.S["{I#.pomme}"]):
             pomme = "rouge"
             nombre = 10
             fraise = ["rouge", "blanche"]
@@ -60,7 +60,7 @@ class BasicTests(unittest.TestCase):
     # CLASSES INHERITANCE: REPR SPECIALS
     #
     def test_inherit_reprClass_print_name(self):
-        class TestClass(txtcr.param.R["{N#}"]):
+        class TestClass(txtcr.Param.R["{N#}"]):
             pomme = "rouge"
 
         test = txtcr.decode(txtcr.encode(TestClass))
@@ -68,7 +68,7 @@ class BasicTests(unittest.TestCase):
         self.assertEqual("TestClass", repr(test))
 
     def test_inherit_reprClass_print_content(self):
-        class TestClass(txtcr.param.R["{I#.pomme}"]):
+        class TestClass(txtcr.Param.R["{I#.pomme}"]):
             pomme = "rouge"
             nombre = 10
             fraise = ["rouge", "blanche"]
@@ -81,12 +81,12 @@ class BasicTests(unittest.TestCase):
     # EMBEDDED CLASS WITH INHERITANCE
     #
     def test_inherit_print_fully_embedded_class(self):
-        class ToBeInherited(txtcr.param.S["{N#}"]):
+        class ToBeInherited(txtcr.Param.S["{N#}"]):
             pomme = "rouge"
             nombre = 10
             fraise = ["rouge", "blanche"]
 
-        class TestClass(txtcr.param.S["<{I#.pouf}>"]):
+        class TestClass(txtcr.Param.S["<{I#.pouf}>"]):
             pouf = ToBeInherited
             patapouf = True
 
@@ -106,7 +106,7 @@ class BasicTests(unittest.TestCase):
 
         def test(path):
             # Concentrating on editing and "compiling"
-            with txtcr.fichier(path, 'w') as tcr:
+            with txtcr.file(path, 'w') as tcr:
                 tcr["N#"] = "File Test"
                 tcr.pomme = "rouge"
                 tcr.poire = "jaune"
@@ -114,7 +114,7 @@ class BasicTests(unittest.TestCase):
             self.assertEqual("<:TCR: File Test>", str(tcr), msg="File compiling in TCR")
 
             # Concentrating on what was saved in the file
-            with txtcr.fichier(path, 'w') as tcr2:
+            with txtcr.file(path, 'w') as tcr2:
                 tcr2["N#"] = "File Test"
                 tcr2.pomme = "mangée"
                 tcr2.poire = "pourrie"

@@ -6,16 +6,15 @@ Ouvrez plusieurs client pour tester !
 import txtcr
 
 import random
-import asyncio
 import websockets
 
-from txtcr.requete import *  # Requetes, POST, GET, ...
+from txtcr.requests.requete import *  # Requetes, POST, GET, ...
 from aioconsole import ainput
 
 
 ### Mise en place des requêtes
 
-reqclt = txtcr.requete.Requetes()
+reqclt = txtcr.requests.requete.Requetes()
 
 
 @reqclt.add(cmd=200)

@@ -1,8 +1,7 @@
 import txtcr
-import asyncio
 import websockets
 
-from txtcr.requete import *  # Requetes, POST, GET, ...
+from txtcr.requests.requete import *  # Requetes, POST, GET, ...
 
 
 class INFO:
@@ -12,7 +11,7 @@ class INFO:
 
 ### Création des requetes
 
-reqserv = txtcr.requete.Requetes()
+reqserv = txtcr.requests.requete.Requetes()
 
 
 # Création d'une requête CONNEXION
