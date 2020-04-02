@@ -1,6 +1,6 @@
-from .types import *
+from txtcr.core.types import *
 
-from .encode import encode
+from txtcr.core.encode import encode
 from functools import partial
 
 

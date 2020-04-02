@@ -1,9 +1,9 @@
-from .decode import decode as _decode
-from .encode import encode as _encode
+from txtcr.core.decode import decode as _decode
+from txtcr.core.encode import encode as _encode
 
-from .types import *
+from txtcr.core.types import *
 
-from . import requete
+from .requests import requete
 
 
 # Decoder

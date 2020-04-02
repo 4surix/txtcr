@@ -1,4 +1,4 @@
-from .types import *
+from txtcr.core.types import *
 
 
 def config_indent(profondeur, indent):

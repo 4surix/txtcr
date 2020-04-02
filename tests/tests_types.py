@@ -1,5 +1,5 @@
 import unittest
-import txtcr.types as t
+import txtcr.core.types as t
 
 
 class TypesTests(unittest.TestCase):

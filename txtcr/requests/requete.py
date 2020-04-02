@@ -1,9 +1,8 @@
-import sys
 import asyncio
 import traceback
 
-from .encode import encode
-from .decode import decode
+from txtcr.core.encode import encode
+from txtcr.core.decode import decode
 
 
 class Requetes:
