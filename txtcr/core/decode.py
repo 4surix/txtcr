@@ -6,18 +6,26 @@ from functools import partial
 
 class Conteneur:
 
-    def __init__(self, ancien_conteneur, value, _clss=None):
+    def __init__(self, ancien_conteneur, value):
         self.ancien_conteneur = ancien_conteneur
-        self.clss = _clss
+
         self.value = value
 
-        self.sous_type = ''
+        # Les objets qui seront dans ce conteneur
+        #  sont d'abors enregistrés en texte 
+        #  puis transformés dans self.end()
         self.texte = []
+
         self.type = ''
+        self.sous_type = ''
+
+        # Si le conteneur actuel est un dictionnaire
+        #  sert à enregistrer d'abord la clé pour ensuite
+        #  l'utiliser quand il faudrat mettre la valeur
         self.key = ''
         
     def add_profondeur(self, value):
-        return Conteneur(self, value, self.clss)
+        return Conteneur(self, value)
 
     def rem_profondeur(self):
         conteneur = self.ancien_conteneur
@@ -27,49 +35,44 @@ class Conteneur:
     def config_type(self, balise):
         if balise in ['1', '0', 'O', '|']:
             self.sous_type = balise
-            return
-        self.type = balise
+
+        else:
+            self.type = balise
 
     def config_clss(self, synt):
 
-        _clss = new_clss(encode)
-        _clss.__class__.__synt__ = synt
-        _clss.__class__.__decode__ = partial(decode, clss_parent=_clss)
+        clss = new_clss(encode)
+        clss.__class__.__synt__ = synt # syntaxe
 
-        conteneur = self.add_profondeur(_clss)
-
-        if conteneur.clss != None:
-            conteneur.ancien_clss = conteneur.clss
-
-        conteneur.clss = _clss
+        conteneur = self.add_profondeur(clss)
 
         return conteneur
         
     def append(self, value):
         self.texte.append(value)
 
-    def end(self, save=True):
+    def end(self):
 
-        #Convertion texte en son type
+        # Convertion texte en type Python
 
         self.type = self.sous_type + self.type
 
         texte = ''.join(self.texte)
-            
+
         if self.type == '"':
             value = str(texte)
-            
+
         elif self.type in ['+', '-']:
             value = mk_nbr(self.type+texte)
 
         elif self.type == '1"':
-            value = TCRBool(True, texte)
-            
+            value = bool(True, texte)
+
         elif self.type == '0"':
-            value = TCRBool(False, texte)
-            
+            value = bool(False, texte)
+
         elif self.type == 'O"':
-            value = TCRNone(texte)
+            value = none(texte)
 
         elif self.type == "'":
             value = texte.encode()
@@ -80,10 +83,7 @@ class Conteneur:
         elif self.type == '##':
             value = str(texte.strip())
 
-        if save:
-            self.save(value)
-        else:
-            return value
+        self.save(value)
 
     def save(self, value):
 
@@ -92,13 +92,16 @@ class Conteneur:
             if self.key != '':
                 self.value[self.key] = value
                 self.key = ''
+
             else:
                 self.key = value
 
         elif isinstance(self.value, dict):
+
             if self.key != '':
                 self.value[self.key] = value
                 self.key = ''
+
             else:
                 self.key = value
 
@@ -108,66 +111,159 @@ class Conteneur:
         elif isinstance(self.value, tuple):
             self.value += (value,)
 
-        #Reset des conteneurs
-        self.type = ''
+        # Mise à zéro des valeurs pour accueillir le prochain objet
         self.texte = []
+
+        self.type = ''
         self.sous_type = ''
 
 
 def decode(texte, *, exclues=[], ever_list=False):
 
     echappement = False
-    texte = ' ' + texte.replace('\n', ' ').replace('\t', ' ').strip() + ' '
     conteneur = Conteneur(None, [])
 
     for place, carac in enumerate(texte):
 
-        # Ouverture -------------------------
-        if (not conteneur.type 
-        and (  (carac in ['<', '{', '[', '(', '"', "'"])
-            or (carac in ['O', '0', '1']
-                and texte[place+1] == '"')
-            or (carac in ['+', '-']
-                and texte[place+1] in list('0123456789'))
-            or (carac in balises_categories 
-                and texte[place+1] == '#')
-            or (carac == '|'
-                and texte[place+1] == ';'))):
+        ### Carac spécial
+
+        if carac == '\n' or carac == '\t':
+
+            if conteneur.type == '"' or conteneur.type == "'":
+                """
+
+                {"pouet" "paf"
+                 "pomme" "il était une pomme
+                 sur un arbre"
+                }
+
+                ["pomme"] == "il était une pomme sur un arbre"
+
+                """
+                continue
+
+            carac = ' '
+
+
+        ### Ouverture
             
-            # Texte, nombre, bool, calcul, cond
-            if (carac not in exclues
-                and carac in balises_types[4:]):
-                    conteneur.config_type(carac)
+        if not conteneur.type:
 
-            # Conteneurs
-            elif (carac not in exclues
-                and carac in balises_types[:4]):
-                    if carac == '<':
-                        conteneur = conteneur.config_clss(0)
-                    elif carac == '{':
-                        conteneur = conteneur.add_profondeur({})
-                    elif carac == '[':
-                        conteneur = conteneur.add_profondeur([])
-                    elif carac == '(':
-                        conteneur = conteneur.add_profondeur(())
+            is_continue = True
 
-            # Catégories
-            elif carac in balises_categories and texte[place+1] == '#':
+            carac_suivant = texte[place+1] if len(texte) != place + 1 else ''
+
+            if carac == '/' and carac_suivant == '/':
+                """ Commantaire
+
+                {// Information //
+                 ID "dfeghyt"
+                 // Autre //
+                 langage "fr"
+                 heure "UTC"
+                }
+
+                """
+                conteneur.config_type('//')
+
+            elif carac == '<':
+                conteneur = conteneur.config_clss(0)
+            elif carac == '{':
+                conteneur = conteneur.add_profondeur({})
+            elif carac == '[':
+                conteneur = conteneur.add_profondeur([])
+            elif carac == '(':
+                conteneur = conteneur.add_profondeur(())
+
+            elif carac == '"':
+                # "Pouet"
+                conteneur.config_type(carac)
+            elif carac == "'":
+                # 'Pouf'
                 conteneur.config_type(carac)
 
-            #
-            elif carac == '|' and texte[place+1] == ';':
+            elif carac_suivant == '"':
+                """
+                [O"None"
+                 0"False"
+                 1"True"
+                ]
+                """
+                if carac == "O":
+                    conteneur.config_type(carac)
+                elif carac == "0":
+                    conteneur.config_type(carac)
+                elif carac == "1":
+                    conteneur.config_type(carac)
+
+            elif carac in ['+', '-'] and carac_suivant in chiffres:
+                # +3456 -876
+                conteneur.config_type(carac)
+
+            elif carac in chiffres:
+                # 765434
+                conteneur.config_type('+')
+                conteneur.append(carac)
+
+            elif carac in balises_categories and carac_suivant == '#':
+                """
+                N#
+                T#
+                I#
+                ...
+                """
+                conteneur.config_type(carac)
+
+            elif carac == '|' and carac_suivant == ';':
                 conteneur.type = '|'
-            
-        # Femeture ----------------------------
-        
+
+            elif carac not in [
+                    '>', '}', ']', ')', # Balises fermante
+                    '#', ' ', ':', ',', '|' # Séparations
+                ]:
+                conteneur.config_type('##')
+                conteneur.append(carac)
+
+            else:
+                is_continue = False
+
+            if is_continue:
+                continue
+
+
+        ### Femeture
+
+        # Commentaire
+        if conteneur.type == '//':
+            # On remplace le type commentaire indiquant qu'il vient d'être créé
+            #  par le type indiquant qu'on est à l'intérieure d'un commentaire
+            conteneur.type = '/'
+
+        elif conteneur.type == '/':
+            # On rentre forcément dans la condition si c'est un commentaire 
+            #  car tout est ignoré dedans
+
+            if '/' == carac == texte[place-1]:
+                conteneur.type = ''
+
         # Conteneure
-        elif (conteneur.type not in ['"', "'", '/']
+        elif (conteneur.type not in ['"', "'"]
             and carac in ['>', '}', ']', ')','#']):
 
+            # Sert pour la syntaxe 1
+            """
+            |;#
+            |;I#{
+                "pomme" "poire"
+                "pouf" "paf"
+            }
+            """
+            #  dans le but que si le conteneur actuel est un dict
+            #  vérifier si on est dans la catégorie I#
             key = ''
             if conteneur.ancien_conteneur:
                 key = conteneur.ancien_conteneur.key
+
 
             if conteneur.texte:
                 conteneur.end()
@@ -180,7 +276,9 @@ def decode(texte, *, exclues=[], ever_list=False):
                 conteneur = conteneur.config_clss(1)
                 continue
 
+
             conteneur = conteneur.rem_profondeur()
+
 
             if (carac == '}' 
                 and '__synt__' in dir(conteneur.value.__class__) 
@@ -193,11 +291,9 @@ def decode(texte, *, exclues=[], ever_list=False):
             and not echappement):
             conteneur.end()
 
-        # Commentaire
-        elif conteneur.type == carac == '/':
-            conteneur.type = ''
 
-        # Echappement
+        ### Echappement
+
         elif carac == '\\':
             if echappement:
                 echappement = False
@@ -206,13 +302,15 @@ def decode(texte, *, exclues=[], ever_list=False):
                 echappement = True
             continue
 
-        elif echappement and carac in ['n', 't']:
+        elif echappement:
             if carac == 'n':
                 conteneur.append('\n')
             elif carac == 't':
                 conteneur.append('\t')
 
-        # Ajout de caractére
+
+        ### Ajout de caractére
+
         elif conteneur.type in ['"', "'"]:
             conteneur.append(carac)
 
@@ -227,28 +325,20 @@ def decode(texte, *, exclues=[], ever_list=False):
                 conteneur.config_type(carac)
                 conteneur.sous_type = ''
 
-        elif conteneur.type == '/':
-            continue
 
-        # Texte sans balise -> Str or Int/Float
-        elif carac in [':', ',', ' ', '|'] and conteneur.type == '##':
-            conteneur.end()
+        ### Fin texte sans balise ou ajout carac
 
-        elif carac != ' ':
-            if not conteneur.type:
-                if carac in chiffres:
-                    conteneur.config_type('+')
-                else:
-                    conteneur.config_type('##')
+        elif carac == ' ' or carac == ':' or carac == ',' or carac == '|':
+            if conteneur.type == '##':
+                conteneur.end()
 
+        elif conteneur.type == '##':
             conteneur.append(carac)
-                
+
+
         if echappement:
             echappement = False
 
-    #Si il reste du texte non enregistré
-    if conteneur.texte:
-        conteneur.end()
 
     retour = conteneur.value
 

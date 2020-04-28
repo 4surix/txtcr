@@ -21,7 +21,7 @@ def encode(data, *, profondeur=-1, indent=0):
 
     # Bytes
     elif isinstance(data, bytes):
-        return "'%s'" % config_echappement(data).replace("'", "\\'")
+        return "'%s'" % config_echappement(data.decode()).replace("'", "\\'")
 
     # Boolean
     elif isinstance(data, (py_bool, TCRBool)):
@@ -108,7 +108,7 @@ def encode(data, *, profondeur=-1, indent=0):
             encode_symlink(getattr(data, 'cmdcode__', None)),
             encode_symlink(getattr(data, 'date__', None)),
             encode_symlink(getattr(data, 'hash__', None)),
-            encode_symlink({k: v for k, v in data.__dict__.items() if str(k)[-2:] != '__'})
+            encode_symlink({k: v for k, v in data.__dict__.items() if str(k)[-2:] != '__'} or None)
         ]
 
         _indent = config_indent(profondeur, indent)

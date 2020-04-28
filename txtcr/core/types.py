@@ -78,10 +78,9 @@ def new_clss(encode):
         hash__ = None
         encode__ = None
 
-        __name__ = ''
-
         def __init__(self, encode_):
 
+            Clss.__name__ = ''
             Clss.encode__ = encode_
 
         def __len__(self):
