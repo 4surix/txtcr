@@ -3,12 +3,12 @@ import txtcr
 
 print("-"*30)
 
-class Pouf(txtcr.Param.S["{N#}"]):
+class Pouf(txtcr.Param.PrebuiltStr["{N#}"]):
     pomme = "rouge"
     nombre = 10
     fraise = ["rouge", "blanche"]
 
-class Pouet(txtcr.Param.S["<{I#.pouf}>"]):
+class Pouet(txtcr.Param.PrebuiltStr["<{I#.pouf}>"]):
     pouf = Pouf
     patapouf = True   
 

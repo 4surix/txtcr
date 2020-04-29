@@ -15,7 +15,7 @@ class Param:
             pouf = rouge
     """
 
-    class R:
+    class PrebuiltRepr:
 
         def __getitem__(self, item):
             class R:
@@ -23,9 +23,9 @@ class Param:
 
             return R
 
-    R = REPR = R()
+    R = REPR = PrebuiltRepr()
 
-    class S:
+    class PrebuiltStr:
 
         def __getitem__(self, item):
             class S:
@@ -33,9 +33,9 @@ class Param:
 
             return S
 
-    S = STR = S()
+    S = STR = PrebuiltStr()
 
-    class T:
+    class PrebuiltTime:
 
         def __getitem__(self, item):
             class T:
@@ -43,4 +43,5 @@ class Param:
 
             return T
 
-    T = DATE = T()
+    T = DATE = PrebuiltTime()
+

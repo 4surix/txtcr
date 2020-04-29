@@ -13,14 +13,14 @@ class BasicTests(unittest.TestCase):
     # CLASSES INHERITANCE: GLOBAL COMPARISON
     #
     def test_inherit_strClass_print_full_class(self):
-        class TestClass(txtcr.Param.S["<{I#.pouf}>"]):
+        class TestClass(txtcr.Param.STR["<{I#.pouf}>"]):
             test = 10
 
         test = txtcr.encode(TestClass)
         self.assertEqual('<N#"TestClass" S#"<{I#.pouf}>" I#{"test" 10}>', test)
 
     def test_inherit_reprClass_print_full_class(self):
-        class TestClass(txtcr.Param.R["<{I#.pouf}>"]):
+        class TestClass(txtcr.Param.REPR["<{I#.pouf}>"]):
             test = 10
 
         test = txtcr.encode(TestClass)
@@ -29,7 +29,7 @@ class BasicTests(unittest.TestCase):
     def test_inheritance_dateClass_print_full_class(self):
         date = str(datetime.datetime.today())
 
-        class TestClass(txtcr.Param.T[date]):
+        class TestClass(txtcr.Param.DATE[date]):
             test = 10
 
         test = txtcr.encode(TestClass)
@@ -39,7 +39,7 @@ class BasicTests(unittest.TestCase):
     # CLASSES INHERITANCE: STR SPECIALS
     #
     def test_inherit_strClass_print_name(self):
-        class TestClass(txtcr.Param.S["{N#}"]):
+        class TestClass(txtcr.Param.STR["{N#}"]):
             pomme = "rouge"
 
         test = txtcr.decode(txtcr.encode(TestClass))
@@ -47,7 +47,7 @@ class BasicTests(unittest.TestCase):
         self.assertEqual("TestClass", str(test))
 
     def test_inherit_strClass_print_content(self):
-        class TestClass(txtcr.Param.S["{I#.pomme}"]):
+        class TestClass(txtcr.Param.STR["{I#.pomme}"]):
             pomme = "rouge"
             nombre = 10
             fraise = ["rouge", "blanche"]
@@ -60,7 +60,7 @@ class BasicTests(unittest.TestCase):
     # CLASSES INHERITANCE: REPR SPECIALS
     #
     def test_inherit_reprClass_print_name(self):
-        class TestClass(txtcr.Param.R["{N#}"]):
+        class TestClass(txtcr.Param.REPR["{N#}"]):
             pomme = "rouge"
 
         test = txtcr.decode(txtcr.encode(TestClass))
@@ -68,7 +68,7 @@ class BasicTests(unittest.TestCase):
         self.assertEqual("TestClass", repr(test))
 
     def test_inherit_reprClass_print_content(self):
-        class TestClass(txtcr.Param.R["{I#.pomme}"]):
+        class TestClass(txtcr.Param.REPR["{I#.pomme}"]):
             pomme = "rouge"
             nombre = 10
             fraise = ["rouge", "blanche"]
@@ -81,12 +81,12 @@ class BasicTests(unittest.TestCase):
     # EMBEDDED CLASS WITH INHERITANCE
     #
     def test_inherit_print_fully_embedded_class(self):
-        class ToBeInherited(txtcr.Param.S["{N#}"]):
+        class ToBeInherited(txtcr.Param.STR["{N#}"]):
             pomme = "rouge"
             nombre = 10
             fraise = ["rouge", "blanche"]
 
-        class TestClass(txtcr.Param.S["<{I#.pouf}>"]):
+        class TestClass(txtcr.Param.STR["<{I#.pouf}>"]):
             pouf = ToBeInherited
             patapouf = True
 
