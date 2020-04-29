@@ -24,7 +24,7 @@ def encode(data, *, profondeur=-1, indent=0):
         return "'%s'" % config_echappement(data.decode()).replace("'", "\\'")
 
     # Boolean
-    elif isinstance(data, (py_bool, TCRBool)):
+    elif isinstance(data, (bool, TCRBool)):
         comm = ''
         if 'commentaire' in dir(data):
             comm = data.commentaire
@@ -70,7 +70,7 @@ def encode(data, *, profondeur=-1, indent=0):
     elif isinstance(data, TCRNone):
         return 'O"%s"' % data.commentaire
 
-    elif type(data).__name__ == 'NoneType':
+    elif data is None:
         return 'O""'
 
     elif is_class(data):

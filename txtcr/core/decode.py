@@ -66,13 +66,13 @@ class Conteneur:
             value = mk_nbr(self.type+texte)
 
         elif self.type == '1"':
-            value = bool(True, texte)
+            value = TCRBool(True, texte)
 
         elif self.type == '0"':
-            value = bool(False, texte)
+            value = TCRBool(False, texte)
 
         elif self.type == 'O"':
-            value = none(texte)
+            value = TCRNone(texte)
 
         elif self.type == "'":
             value = texte.encode()
