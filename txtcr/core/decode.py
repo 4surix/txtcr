@@ -1,7 +1,9 @@
-from txtcr.core.types import *
 
-from txtcr.core.encode import encode
 from functools import partial
+
+
+from txtcr.core.types import *
+from txtcr.core.encode import encode
 
 
 class Conteneur:
@@ -120,7 +122,9 @@ def decode(texte, *, exclues=[], ever_list=False):
     echappement = False
     conteneur = Conteneur(None, [])
 
-    for place, carac in enumerate(texte):
+    taille_texte = len(texte)
+
+    for position, carac in enumerate(texte):
 
         ### Carac spécial
 
@@ -134,7 +138,7 @@ def decode(texte, *, exclues=[], ever_list=False):
                  sur un arbre"
                 }
 
-                ["pomme"] == "il était une pomme sur un arbre"
+                ["pomme"] == "il était une pomme  sur un arbre"
 
                 """
                 continue
@@ -148,13 +152,13 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             is_continue = True
 
-            carac_suivant = texte[place+1] if len(texte) != place + 1 else ''
+            carac_suivant = texte[position + 1] if taille_texte != position + 1 else ''
 
             if carac == '/' and carac_suivant == '/':
                 """ Commantaire
 
                 {// Information //
-                 ID "dfeghyt"
+                 ID 123456
                  // Autre //
                  langage "fr"
                  heure "UTC"
@@ -164,12 +168,19 @@ def decode(texte, *, exclues=[], ever_list=False):
                 conteneur.type = '//'
 
             elif carac == '<':
+                # <I#{}>
                 conteneur = conteneur.config_clss(0)
+
             elif carac == '{':
+                # {"pouet" 123456}
                 conteneur = conteneur.add_profondeur({})
+
             elif carac == '[':
+                # ["pouf" "poire" 1234]
                 conteneur = conteneur.add_profondeur([])
+
             elif carac == '(':
+                # (34.6 "wouf" 'pouet')
                 conteneur = conteneur.add_profondeur(())
 
             elif carac == '"':
@@ -178,7 +189,7 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             elif carac == "'":
                 # 'Pouf'
-                conteneur.config_type(carac)
+                conteneur.type = carac
 
             elif carac_suivant == '"':
                 """Ancienne syntaxe pour None, False, True
@@ -202,14 +213,18 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             elif carac in balises_categories and carac_suivant == '#':
                 """
-                N#
-                T#
-                I#
+                N#Pouet
+                I#{}
                 ...
                 """
                 conteneur.type = carac
 
             elif carac == '|' and carac_suivant == ';':
+                """
+                |;#
+                |;N#Pomme
+                |;I#{}
+                """
                 conteneur.type = '|'
 
             elif carac not in [
@@ -238,7 +253,7 @@ def decode(texte, *, exclues=[], ever_list=False):
             # On rentre forcément dans la condition si c'est un commentaire 
             #  car tout est ignoré dedans
 
-            if '/' == carac == texte[place-1]:
+            if '/' == carac == texte[position - 1]: # [...] blabla//
                 conteneur.type = ''
 
         # Conteneure
@@ -261,13 +276,16 @@ def decode(texte, *, exclues=[], ever_list=False):
 
 
             if conteneur.texte:
+                # (pomme), [pomme], {name Pouf}
                 conteneur.end()
-            
+
             elif conteneur.type in balises_categories:
+                # <I#{}>
                 conteneur.end()
                 continue
-            
+
             elif conteneur.type == '|':
+                # |;#|;I#{}
                 conteneur = conteneur.config_clss(1)
                 continue
 
@@ -275,43 +293,62 @@ def decode(texte, *, exclues=[], ever_list=False):
             conteneur = conteneur.rem_profondeur()
 
 
-            if (carac == '}' 
+            if (carac == '}'
+                and key == 'I'
                 and '__synt__' in dir(conteneur.value.__class__) 
-                and conteneur.value.__class__.__synt__ == 1
-                and key == 'I'):
+                and conteneur.value.__class__.__synt__ == 1):
+                """
+                |;#
+                |;I#{
+                    1234567 "cuik"
+                } <--
+                """
                 conteneur = conteneur.rem_profondeur()
 
         # Texte
-        elif ((carac == conteneur.type and carac in ['"', "'"])
-            and not echappement):
+        elif (carac == conteneur.type 
+              and carac in ['"', "'"]
+              and not echappement
+            ):
             conteneur.end()
 
 
         ### Echappement
 
         elif carac == '\\':
+
             if echappement:
+                # "Pomme \\ poire"
                 echappement = False
                 conteneur.texte += '\\'
 
             else:
+                # "Pomme \ poire"
                 echappement = True
+
             continue
 
         elif echappement:
+
             if carac == 'n':
+                # "Pomme \n poire"
                 conteneur.texte += '\n'
 
             elif carac == 't':
+                # "Pomme \t poire"
                 conteneur.texte += '\t'
 
 
         ### Ajout de caractére
 
         elif conteneur.type in ['"', "'"]:
+            # "Pomme"
+            # 'Pomme'
             conteneur.texte += carac
 
         elif conteneur.type in ['+', '-']:
+            # +123
+            # -123
             if carac not in '0123456789.':
                 conteneur.end()
             else:

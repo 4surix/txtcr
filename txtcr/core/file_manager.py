@@ -1,3 +1,4 @@
+
 from .decode import decode
 from .encode import encode
 
@@ -12,8 +13,6 @@ class FileManager:
             f.pouet = "pouf"
 
             # Save Auto
-
-        # ----------
 
         f = fichier('path/name.tcr')
 
@@ -51,9 +50,10 @@ class FileManager:
             data = decode(fichier.read())
 
         except FileNotFoundError as exception:
-            # Dans le cas où le fichier n'existerai pas
-            # Si une valeur par défaut a été definie, créer un ficher avec celle ci
-            # Sinon léve l'erreur
+            # Dans le cas où le fichier n'existerai pas,
+            #   si une valeur par défaut a été definie
+            #     alors créer un ficher avec celle ci,
+            #   sinon léve l'erreur.
 
             if self.default:
                 fichier = open(self.chemin, 'w', encoding='utf-8')
@@ -68,7 +68,7 @@ class FileManager:
 
     def __save(self, data):
 
-        # Encode avant pour voir si tout est bon avant d'ouvrir le fichier
+        # Encode avant pour voir si tout est bon avant d'ouvrir le fichier.
         data = encode(data, indent=self.indent)
         # Enregistrement
         fichier = open(self.chemin, 'w', encoding='utf-8')
