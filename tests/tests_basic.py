@@ -97,7 +97,7 @@ class BasicTests(unittest.TestCase):
 
         self.assertEqual('<N#"TestClass" S#"<{I#.pouf}>" I#{"pouf" <N#"ToBeInherited" S#"{N#}" '
                          'I#{"pomme" "rouge" "nombre" 10 "fraise" '
-                         '["rouge" "blanche"]}> "patapouf" 1""}>',
+                         '["rouge" "blanche"]}> "patapouf" True}>',
                          test)
 
     #
