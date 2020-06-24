@@ -1,3 +1,4 @@
+
 from txtcr.core.types import *
 
 
@@ -24,12 +25,11 @@ def encode(data, *, profondeur=-1, indent=0):
         return "'%s'" % config_echappement(data.decode()).replace("'", "\\'")
 
     # Boolean
-    elif isinstance(data, (bool, TCRBool)):
-        comm = ''
-        if 'commentaire' in dir(data):
-            comm = data.commentaire
-
-        return ['0"%s"', '1"%s"'][data] % comm
+    elif isinstance(data, bool):
+        if data:
+            return 'True'
+        else:
+            return 'False'
 
     elif isinstance(data, (int, float)):
         return "%s" % data
@@ -67,11 +67,8 @@ def encode(data, *, profondeur=-1, indent=0):
                 + _indent
                 + ')')
 
-    elif isinstance(data, TCRNone):
-        return 'O"%s"' % data.commentaire
-
     elif data is None:
-        return 'O""'
+        return 'None'
 
     elif is_class(data):
 
