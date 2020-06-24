@@ -32,13 +32,6 @@ class Conteneur:
         conteneur.save(self.value)
         return conteneur
 
-    def config_type(self, balise):
-        if balise in ['1', '0', 'O', '|']:
-            self.sous_type = balise
-
-        else:
-            self.type = balise
-
     def config_clss(self, synt):
 
         clss = new_clss(encode)
@@ -66,13 +59,13 @@ class Conteneur:
             value = mk_nbr(self.type+texte)
 
         elif self.type == '1"':
-            value = TCRBool(True, texte)
+            value = True
 
         elif self.type == '0"':
-            value = TCRBool(False, texte)
+            value = False
 
         elif self.type == 'O"':
-            value = TCRNone(texte)
+            value = None
 
         elif self.type == "'":
             value = texte.encode()
@@ -82,6 +75,13 @@ class Conteneur:
 
         elif self.type == '##':
             value = str(texte.strip())
+
+            if value == 'True':
+                value = True
+            elif value == 'False':
+                value = False
+            elif value == 'None':
+                value = None
 
         self.save(value)
 
@@ -183,18 +183,15 @@ def decode(texte, *, exclues=[], ever_list=False):
                 conteneur.config_type(carac)
 
             elif carac_suivant == '"':
-                """
+                """Ancienne syntaxe pour None, False, True
+
                 [O"None"
                  0"False"
                  1"True"
                 ]
                 """
-                if carac == "O":
-                    conteneur.config_type(carac)
-                elif carac == "0":
-                    conteneur.config_type(carac)
-                elif carac == "1":
-                    conteneur.config_type(carac)
+                if carac == "O" or carac == "0" or carac == "1":
+                    conteneur.sous_type = carac
 
             elif carac in ['+', '-'] and carac_suivant in chiffres:
                 # +3456 -876
