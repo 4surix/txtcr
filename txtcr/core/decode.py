@@ -164,7 +164,7 @@ def decode(texte, *, exclues=[], ever_list=False):
                 }
 
                 """
-                conteneur.config_type('//')
+                conteneur.type = '//'
 
             elif carac == '<':
                 conteneur = conteneur.config_clss(0)
@@ -177,7 +177,8 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             elif carac == '"':
                 # "Pouet"
-                conteneur.config_type(carac)
+                conteneur.type = carac
+
             elif carac == "'":
                 # 'Pouf'
                 conteneur.config_type(carac)
@@ -195,12 +196,12 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             elif carac in ['+', '-'] and carac_suivant in chiffres:
                 # +3456 -876
-                conteneur.config_type(carac)
+                conteneur.type = carac
 
             elif carac in chiffres:
                 # 765434
-                conteneur.config_type('+')
                 conteneur.append(carac)
+                conteneur.type = '+'
 
             elif carac in balises_categories and carac_suivant == '#':
                 """
@@ -209,7 +210,7 @@ def decode(texte, *, exclues=[], ever_list=False):
                 I#
                 ...
                 """
-                conteneur.config_type(carac)
+                conteneur.type = carac
 
             elif carac == '|' and carac_suivant == ';':
                 conteneur.type = '|'
@@ -218,8 +219,8 @@ def decode(texte, *, exclues=[], ever_list=False):
                     '>', '}', ']', ')', # Balises fermante
                     '#', ' ', ':', ',', '|' # Séparations
                 ]:
-                conteneur.config_type('##')
                 conteneur.append(carac)
+                conteneur.type = '##'
 
             else:
                 is_continue = False
@@ -319,8 +320,10 @@ def decode(texte, *, exclues=[], ever_list=False):
 
         elif conteneur.type == '|':
             if carac in balises_categories:
-                conteneur.config_type(carac)
-                conteneur.sous_type = ''
+                # |;N#
+                # |;I#
+                # ...
+                conteneur.type = carac
 
 
         ### Fin texte sans balise ou ajout carac
