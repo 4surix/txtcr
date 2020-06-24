@@ -214,7 +214,7 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             elif carac not in [
                     '>', '}', ']', ')', # Balises fermante
-                    '#', ' ', ':', ',', '|' # Séparations
+                    '#', ' ', ',', '|', ':', '=' # Séparations
                 ]:
                 conteneur.type = '##'
                 conteneur.texte += carac
@@ -327,7 +327,12 @@ def decode(texte, *, exclues=[], ever_list=False):
 
         ### Fin texte sans balise ou ajout carac
 
-        elif carac == ' ' or carac == ':' or carac == ',' or carac == '|':
+        elif (carac == ' '    # pouet "pomme"
+              or carac == ',' # pouet, "pomme"
+              or carac == '|' # pouet| "pomme"
+              or carac == ':' # pouet: "pomme"
+              or carac == '=' # pouet= "pomme"
+            ):
             if conteneur.type == '##':
                 conteneur.end()
 
