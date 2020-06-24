@@ -13,60 +13,6 @@ def mk_nbr(texte):
     return nbr
 
 
-# Bool
-class TCRBool:
-
-    def __init__(self, value, commentaire=''):
-        self.value = value
-        self.commentaire = commentaire
-
-    def __bool__(self):
-        return self.value
-
-    def __eq__(self, obj):
-        return self.value == obj
-
-    def __ne__(self, obj):
-        return self.value != obj
-
-    def __str__(self):
-        return '%s%s' % (self.value, ' #' + self.commentaire if self.commentaire else '')
-
-    def __repr__(self):
-        return '%s' % self.value
-
-    def __index__(self):
-        return self.value * 1
-
-    def __hash__(self):
-        return hash(self.value)
-
-
-# None
-class TCRNone:
-
-    def __init__(self, commentaire=''):
-        self.commentaire = commentaire
-
-    def __bool__(self):
-        return False
-
-    def __eq__(self, obj):
-        return obj is None
-
-    def __ne__(self, obj):
-        return obj is not None
-
-    def __str__(self):
-        return 'None%s' % (' #' + self.commentaire if self.commentaire else '')
-
-    def __repr__(self):
-        return '%s' % None
-
-    def __hash__(self):
-        return hash(None)
-
-
 # Class
 def new_clss(encode):
     class Clss:
