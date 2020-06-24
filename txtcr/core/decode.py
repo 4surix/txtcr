@@ -14,7 +14,7 @@ class Conteneur:
         # Les objets qui seront dans ce conteneur
         #  sont d'abors enregistrés en texte 
         #  puis transformés dans self.end()
-        self.texte = []
+        self.texte = ''
 
         self.type = ''
         self.sous_type = ''
@@ -40,9 +40,6 @@ class Conteneur:
         conteneur = self.add_profondeur(clss)
 
         return conteneur
-        
-    def append(self, value):
-        self.texte.append(value)
 
     def end(self):
 
@@ -50,7 +47,7 @@ class Conteneur:
 
         self.type = self.sous_type + self.type
 
-        texte = ''.join(self.texte)
+        texte = self.texte
 
         if self.type == '"':
             value = str(texte)
@@ -112,7 +109,7 @@ class Conteneur:
             self.value += (value,)
 
         # Mise à zéro des valeurs pour accueillir le prochain objet
-        self.texte = []
+        self.texte = ''
 
         self.type = ''
         self.sous_type = ''
@@ -200,8 +197,8 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             elif carac in chiffres:
                 # 765434
-                conteneur.append(carac)
                 conteneur.type = '+'
+                conteneur.texte += carac
 
             elif carac in balises_categories and carac_suivant == '#':
                 """
@@ -219,8 +216,8 @@ def decode(texte, *, exclues=[], ever_list=False):
                     '>', '}', ']', ')', # Balises fermante
                     '#', ' ', ':', ',', '|' # Séparations
                 ]:
-                conteneur.append(carac)
                 conteneur.type = '##'
+                conteneur.texte += carac
 
             else:
                 is_continue = False
@@ -295,28 +292,30 @@ def decode(texte, *, exclues=[], ever_list=False):
         elif carac == '\\':
             if echappement:
                 echappement = False
-                conteneur.append('\\')
+                conteneur.texte += '\\'
+
             else:
                 echappement = True
             continue
 
         elif echappement:
             if carac == 'n':
-                conteneur.append('\n')
+                conteneur.texte += '\n'
+
             elif carac == 't':
-                conteneur.append('\t')
+                conteneur.texte += '\t'
 
 
         ### Ajout de caractére
 
         elif conteneur.type in ['"', "'"]:
-            conteneur.append(carac)
+            conteneur.texte += carac
 
         elif conteneur.type in ['+', '-']:
             if carac not in '0123456789.':
                 conteneur.end()
             else:
-                conteneur.append(carac)
+                conteneur.texte += carac
 
         elif conteneur.type == '|':
             if carac in balises_categories:
@@ -333,7 +332,7 @@ def decode(texte, *, exclues=[], ever_list=False):
                 conteneur.end()
 
         elif conteneur.type == '##':
-            conteneur.append(carac)
+            conteneur.texte += carac
 
 
         if echappement:
