@@ -24,4 +24,4 @@ def encode(data, **ops):
 
 
 # File
-file = FileManager
+file = fichier = FileManager
