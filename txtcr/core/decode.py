@@ -24,17 +24,6 @@ class Conteneur:
         #  sert à enregistrer d'abord la clé pour ensuite
         #  l'utiliser quand il faudrat mettre la valeur
         self.key = ''
-        
-    def add_profondeur(self, value):
-        return Conteneur(self, value)
-
-    def rem_profondeur(self):
-        conteneur = self.ancien_conteneur
-        conteneur.save(self.value)
-        return conteneur
-
-    def config_clss(self):
-        return self.add_profondeur(new_clss(encode))
 
     def end(self):
 
@@ -158,19 +147,19 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             elif carac == '<':
                 # <I#{}>
-                conteneur = conteneur.config_clss()
+                conteneur = Conteneur(conteneur, new_clss(encode))
 
             elif carac == '{':
                 # {"pouet" 123456}
-                conteneur = conteneur.add_profondeur({})
+                conteneur = Conteneur(conteneur, {})
 
             elif carac == '[':
                 # ["pouf" "poire" 1234]
-                conteneur = conteneur.add_profondeur([])
+                conteneur = Conteneur(conteneur, [])
 
             elif carac == '(':
                 # (34.6 "wouf" 'pouet')
-                conteneur = conteneur.add_profondeur(())
+                conteneur = Conteneur(conteneur, ())
 
             elif carac == '"':
                 # "Pouet"
@@ -239,7 +228,9 @@ def decode(texte, *, exclues=[], ever_list=False):
                 conteneur.end()
                 continue
 
-            conteneur = conteneur.rem_profondeur()
+            ancien_conteneur = conteneur.ancien_conteneur
+            ancien_conteneur.save(conteneur.value)
+            conteneur = ancien_conteneur
 
         # Texte
         elif (carac == conteneur.type 
