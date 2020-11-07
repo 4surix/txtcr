@@ -15,7 +15,7 @@ class Conteneur:
 
         # Les objets qui seront dans ce conteneur
         #  sont d'abors enregistrés en texte 
-        #  puis transformés dans self.end()
+        #  puis transformés dans self.convert()
         self.texte = ''
 
         self.type = ''
@@ -25,7 +25,7 @@ class Conteneur:
         #  l'utiliser quand il faudrat mettre la valeur
         self.key = ''
 
-    def end(self):
+    def convert(self):
 
         # Convertion texte en type Python
 
@@ -62,9 +62,9 @@ class Conteneur:
             elif value == 'None':
                 value = None
 
-        self.save(value)
+        self.add(value)
 
-    def save(self, value):
+    def add(self, value):
 
         if is_class(self.value) and 'repr__' in dir(self.value):
 
@@ -221,15 +221,15 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             if conteneur.texte:
                 # (pomme), [pomme], {name Pouf}
-                conteneur.end()
+                conteneur.convert()
 
             elif conteneur.type in balises_categories:
                 # <I#{}>
-                conteneur.end()
+                conteneur.convert()
                 continue
 
             ancien_conteneur = conteneur.ancien_conteneur
-            ancien_conteneur.save(conteneur.value)
+            ancien_conteneur.add(conteneur.value)
             conteneur = ancien_conteneur
 
         # Texte
@@ -237,7 +237,7 @@ def decode(texte, *, exclues=[], ever_list=False):
               and carac in ['"', "'"]
               and not echappement
             ):
-            conteneur.end()
+            conteneur.convert()
 
 
         ### Echappement
@@ -277,7 +277,7 @@ def decode(texte, *, exclues=[], ever_list=False):
             # +123
             # -123
             if carac not in '0123456789.':
-                conteneur.end()
+                conteneur.convert()
             else:
                 conteneur.texte += carac
 
@@ -290,7 +290,7 @@ def decode(texte, *, exclues=[], ever_list=False):
               or carac == '=' # pouet= "pomme"
             ):
             if conteneur.type == '##':
-                conteneur.end()
+                conteneur.convert()
 
         elif conteneur.type == '##':
             conteneur.texte += carac
