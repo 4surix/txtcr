@@ -19,7 +19,6 @@ class Conteneur:
         self.texte = ''
 
         self.type = ''
-        self.sous_type = ''
 
         # Si le conteneur actuel est un dictionnaire
         #  sert à enregistrer d'abord la clé pour ensuite
@@ -34,20 +33,12 @@ class Conteneur:
         conteneur.save(self.value)
         return conteneur
 
-    def config_clss(self, synt):
-
-        clss = new_clss(encode)
-        clss.__class__.__synt__ = synt # syntaxe
-
-        conteneur = self.add_profondeur(clss)
-
-        return conteneur
+    def config_clss(self):
+        return self.add_profondeur(new_clss(encode))
 
     def end(self):
 
         # Convertion texte en type Python
-
-        self.type = self.sous_type + self.type
 
         texte = self.texte
 
@@ -112,9 +103,7 @@ class Conteneur:
 
         # Mise à zéro des valeurs pour accueillir le prochain objet
         self.texte = ''
-
         self.type = ''
-        self.sous_type = ''
 
 
 def decode(texte, *, exclues=[], ever_list=False):
@@ -169,7 +158,7 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             elif carac == '<':
                 # <I#{}>
-                conteneur = conteneur.config_clss(0)
+                conteneur = conteneur.config_clss()
 
             elif carac == '{':
                 # {"pouet" 123456}
@@ -191,17 +180,6 @@ def decode(texte, *, exclues=[], ever_list=False):
                 # 'Pouf'
                 conteneur.type = carac
 
-            elif carac_suivant == '"':
-                """Ancienne syntaxe pour None, False, True
-
-                [O"None"
-                 0"False"
-                 1"True"
-                ]
-                """
-                if carac == "O" or carac == "0" or carac == "1":
-                    conteneur.sous_type = carac
-
             elif carac in ['+', '-'] and carac_suivant in chiffres:
                 # +3456 -876
                 conteneur.type = carac
@@ -219,17 +197,9 @@ def decode(texte, *, exclues=[], ever_list=False):
                 """
                 conteneur.type = carac
 
-            elif carac == '|' and carac_suivant == ';':
-                """
-                |;#
-                |;N#Pomme
-                |;I#{}
-                """
-                conteneur.type = '|'
-
             elif carac not in [
                     '>', '}', ']', ')', # Balises fermante
-                    '#', ' ', ',', '|', ':', '=' # Séparations
+                    '#', ' ', ',', ':', '=' # Séparations
                 ]:
                 conteneur.type = '##'
                 conteneur.texte += carac
@@ -258,22 +228,7 @@ def decode(texte, *, exclues=[], ever_list=False):
 
         # Conteneure
         elif (conteneur.type not in ['"', "'"]
-            and carac in ['>', '}', ']', ')','#']):
-
-            # Sert pour la syntaxe 1
-            """
-            |;#
-            |;I#{
-                "pomme" "poire"
-                "pouf" "paf"
-            }
-            """
-            #  dans le but que si le conteneur actuel est un dict
-            #  vérifier si on est dans la catégorie I#
-            key = ''
-            if conteneur.ancien_conteneur:
-                key = conteneur.ancien_conteneur.key
-
+            and carac in ['>', '}', ']', ')', '#']):
 
             if conteneur.texte:
                 # (pomme), [pomme], {name Pouf}
@@ -284,26 +239,7 @@ def decode(texte, *, exclues=[], ever_list=False):
                 conteneur.end()
                 continue
 
-            elif conteneur.type == '|':
-                # |;#|;I#{}
-                conteneur = conteneur.config_clss(1)
-                continue
-
-
             conteneur = conteneur.rem_profondeur()
-
-
-            if (carac == '}'
-                and key == 'I'
-                and '__synt__' in dir(conteneur.value.__class__) 
-                and conteneur.value.__class__.__synt__ == 1):
-                """
-                |;#
-                |;I#{
-                    1234567 "cuik"
-                } <--
-                """
-                conteneur = conteneur.rem_profondeur()
 
         # Texte
         elif (carac == conteneur.type 
@@ -354,19 +290,11 @@ def decode(texte, *, exclues=[], ever_list=False):
             else:
                 conteneur.texte += carac
 
-        elif conteneur.type == '|':
-            if carac in balises_categories:
-                # |;N#
-                # |;I#
-                # ...
-                conteneur.type = carac
-
 
         ### Fin texte sans balise ou ajout carac
 
         elif (carac == ' '    # pouet "pomme"
               or carac == ',' # pouet, "pomme"
-              or carac == '|' # pouet| "pomme"
               or carac == ':' # pouet: "pomme"
               or carac == '=' # pouet= "pomme"
             ):

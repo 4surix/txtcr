@@ -92,8 +92,6 @@ def encode(data, *, profondeur=-1, indent=0):
             'I#'
         ]
 
-        syntaxe = getattr(data, 'syntaxe__', 0)
-
         def encode_symlink(value):
             return None if value is None else encode(value, profondeur=profondeur, indent=indent)
 
