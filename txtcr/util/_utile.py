@@ -6,13 +6,21 @@ py_str = str
 py_bool = bool
 
 
-balises_categories = ['N', 'D', 'S', 'R', 'C', 'T', 'I']
+balises_categories = ['N', 'D', 'S', 'R', 'C', 'T', 'L', 'I']
 
-balises_types = ['<', '{', '[', '(', '"', "'", '+', '-', '1', '0', 'O', '/']
+balises_ouvrantes = ['<', '{', '[', '(', '"', "'", '+', '-', '/']
+
+balises_fermentes = ['>', '}', ']', ')']
+
+balises_separations = ['#', '=', ',', ':']
 
 chiffres = list('0123456789')
 
-chars_to_str = list('abcdefghijklmnopqrstuvwxyz0123456789_')
+balises = (
+    balises_ouvrantes
+    + balises_fermentes
+    + balises_separations
+)
 
 
 def is_class(obj):
