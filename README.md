@@ -11,36 +11,37 @@ Tout est expliqué dans le [wiki](https://github.com/4surix/txtcr/wiki) (encore 
 ## Non indenté
 
 ```
-<N#"Profil" I#{"uid" 12345678 "nom" "Petite patate" "langues" ["français" "español"] "réseaux" [("discord" "Patatie#1234") ("email" "patate@puree.com")] "activités favorites" ["manger" "dormir"] "connectée" True "description" None}>
+<N#Profil I#{uid 12345678 nom "Petite patate" langues [français español] réseaux [(discord "Patatie#1234") (email patate@puree.com)] "activités favorites" [manger dormir] connectée True description None}>
 ```
   
 ## Indenté
 
 ```
-<N#"Profil"
- I#
-    {"uid" 12345678
-     "nom" "Petite patate"
-     "langues" 
-        ["français"
-         "español"
+<
+    N#Profil
+    I#{
+        uid 12345678
+        nom "Petite patate"
+        langues [
+            français
+            español
         ]
-     "réseaux" 
-        [
-            ("discord"
-             "Patatie#1234"
+        réseaux [
+            (
+                discord
+                "Patatie#1234"
             )
-         
-            ("email"
-             "patate@puree.com"
+            (
+                email
+                patate@puree.com
             )
         ]
-     "activités favorites" 
-        ["manger"
-         "dormir"
+        "activités favorites" [
+            manger
+            dormir
         ]
-     "connectée" True
-     "description" None
+        connectée True
+        description None
     }
 >
 ```
