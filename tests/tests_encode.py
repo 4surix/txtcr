@@ -29,7 +29,7 @@ class EncodingTests(unittest.TestCase):
 
     def test_dict(self):
         test = {1: "test", 2: {"test": True}}
-        self.assertEqual('{1 "test" 2 {"test" True}}', tcr.encode(test))
+        self.assertEqual('{1 test 2 {test True}}', tcr.encode(test))
 
     def test_list(self):
         self.assertEqual('[0 1 2]', tcr.encode([0, 1, 2]))

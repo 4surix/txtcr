@@ -20,14 +20,14 @@ class BasicTests(unittest.TestCase):
             test = 10
 
         test = txtcr.encode(TestClass)
-        self.assertEqual('<N#"TestClass" S#"<{I#.pouf}>" I#{"test" 10}>', test)
+        self.assertEqual('<N#TestClass S#"<{I#.pouf}>" I#{test 10}>', test)
 
     def test_inherit_reprClass_print_full_class(self):
         class TestClass(txtcr.Param.REPR["<{I#.pouf}>"]):
             test = 10
 
         test = txtcr.encode(TestClass)
-        self.assertEqual('<N#"TestClass" R#"<{I#.pouf}>" I#{"test" 10}>', test)
+        self.assertEqual('<N#TestClass R#"<{I#.pouf}>" I#{test 10}>', test)
 
     def test_inheritance_dateClass_print_full_class(self):
         date = str(datetime.datetime.today())
@@ -36,7 +36,7 @@ class BasicTests(unittest.TestCase):
             test = 10
 
         test = txtcr.encode(TestClass)
-        self.assertEqual('<N#"TestClass" T#"' + date + '" I#{"test" 10}>', test)
+        self.assertEqual('<N#TestClass T#"' + date + '" I#{test 10}>', test)
 
     #
     # CLASSES INHERITANCE: STR SPECIALS
@@ -95,10 +95,13 @@ class BasicTests(unittest.TestCase):
 
         test = txtcr.encode(TestClass)
 
-        self.assertEqual('<N#"TestClass" S#"<{I#.pouf}>" I#{"pouf" <N#"ToBeInherited" S#"{N#}" '
-                         'I#{"pomme" "rouge" "nombre" 10 "fraise" '
-                         '["rouge" "blanche"]}> "patapouf" True}>',
-                         test)
+        self.assertEqual(
+            '<N#TestClass S#"<{I#.pouf}>" I#{pouf <N#ToBeInherited S#"{N#}" '
+            'I#{pomme rouge nombre 10 fraise '
+            '[rouge blanche]}> patapouf True}>'
+            ,
+            test
+        )
 
     #
     # FILE
@@ -114,7 +117,9 @@ class BasicTests(unittest.TestCase):
                 tcr.pomme = "rouge"
                 tcr.poire = "jaune"
 
-            self.assertEqual("<:TCR: File Test>", str(tcr), msg="File compiling in TCR")
+            self.assertEqual(
+                "<:TCR: File Test>", str(tcr), msg="File compiling in TCR"
+            )
 
             # Concentrating on what was saved in the file
             with txtcr.file(path, 'w') as tcr2:
@@ -125,9 +130,11 @@ class BasicTests(unittest.TestCase):
             with open(path, 'r', encoding='utf-8') as f:
                 c = f.read()
 
-            self.assertEqual('<N#"File Test" I#{"pomme" "mangée" "poire" "pourrie"}>',
-                             c,
-                             msg="File: comparing saved TCR to expected")
+            self.assertEqual(
+                '<N#"File Test" I#{pomme mangée poire pourrie}>',
+                c,
+                msg="File: comparing saved TCR to expected"
+            )
 
         try:
             test(filepath)
