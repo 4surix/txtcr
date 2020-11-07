@@ -12,6 +12,8 @@ from txtcr.util.inheritance_classes import Param
 # Requests
 from .requests import requete
 
+from txtcr.core import __version__
+
 
 # File
 file = fichier = FileManager
