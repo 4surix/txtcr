@@ -1,3 +1,6 @@
+# coding: utf-8
+# Python 3.6.2
+# ----------------------------------------------------------------------------
 
 from functools import partial
 
@@ -9,6 +12,7 @@ from txtcr.core.encode import encode
 class Conteneur:
 
     def __init__(self, ancien_conteneur, value):
+
         self.ancien_conteneur = ancien_conteneur
 
         self.value = value
@@ -35,7 +39,7 @@ class Conteneur:
             value = str(texte)
 
         elif self.type in ['+', '-']:
-            value = mk_nbr(self.type+texte)
+            value = mk_nbr(self.type + texte)
 
         elif self.type == '1"':
             value = True
@@ -50,7 +54,7 @@ class Conteneur:
             value = texte.encode()
 
         elif self.type in balises_categories:
-            value = self.type+'#'
+            value = self.type + '#'
 
         elif self.type == '##':
             value = str(texte.strip())
@@ -130,7 +134,11 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             is_continue = True
 
-            carac_suivant = texte[position + 1] if taille_texte != position + 1 else ''
+            carac_suivant = (
+                '' if taille_texte == position + 1
+                else
+                    texte[position + 1]
+            )
 
             if carac == '/' and carac_suivant == '/':
                 """ Commantaire
@@ -204,7 +212,8 @@ def decode(texte, *, exclues=[], ever_list=False):
 
         # Commentaire
         if conteneur.type == '//':
-            # On remplace le type commentaire indiquant qu'il vient d'être créé
+            # On remplace le type 
+            #  indiquant qu'un commentaire vient d'être créé,
             #  par le type indiquant qu'on est à l'intérieure d'un commentaire
             conteneur.type = '/'
 

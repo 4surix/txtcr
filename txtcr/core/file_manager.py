@@ -1,3 +1,6 @@
+# coding: utf-8
+# Python 3.6.2
+# ----------------------------------------------------------------------------
 
 from .decode import decode
 from .encode import encode
@@ -6,7 +9,8 @@ from .encode import encode
 class FileManager:
     """
     Class allowing to quickly edit, save and get TCR files
-    Classe permettant de gérer des fichiers rapidement et des les écrire/lire en TCR
+    Classe permettant de gérer des fichiers rapidement 
+      et des les écrire/lire en TCR
 
     Ex:
         with fichier('path/name.tcr') as f:

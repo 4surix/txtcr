@@ -1,3 +1,7 @@
+# coding: utf-8
+# Python 3.6.2
+# ----------------------------------------------------------------------------
+
 from txtcr.util._utile import *
 
 
@@ -30,6 +34,7 @@ def new_clss(encode):
             Clss.encode__ = encode_
 
         def __len__(self):
+
             return len(self.__dict__)
 
         def __str__(self):
@@ -108,20 +113,18 @@ def new_clss(encode):
 
         def keys(self):
 
-            for key in self.__dict__.keys():
-                yield key
+            return self.__dict__.keys()
 
         def values(self):
 
-            for key, value in self.__dict__.items():
-                yield value
+            return self.__dict__.items()
 
         def items(self):
 
-            for key, value in self.__dict__.items():
-                yield key, value
+            return self.__dict__.items()
 
         def encode(self):
+
             return Clss.encode__(self)
 
         def get(self, item, defaut=None):
@@ -137,20 +140,17 @@ def new_clss(encode):
             }.get(item)
 
             if value:
-                value = getattr(Clss, value, None)
-                if value is None:
-                    value = defaut
-                return value
+                return getattr(Clss, value, defaut)
 
             elif item == 'I#':
-                value = {k: v for k, v in self.__dict__.items()}
-                if not value:
-                    value = defaut
+                return (
+                    {**self.__dict__} if self.__dict__
+                    else
+                        defaut
+                )
 
             else:
-                value = self.__dict__.get(item, defaut)
-
-            return value
+                return self.__dict__.get(item, defaut)
 
         def setdefault(self, item, defaut=None):
 
@@ -166,9 +166,11 @@ def new_clss(encode):
 
             if value:
                 value = getattr(Clss, value, None)
+
                 if value is None:
                     setattr(Clss, value, defaut)
                     value = defaut
+
                 return value
 
             elif item == 'I#':
@@ -176,11 +178,10 @@ def new_clss(encode):
                     for k, v in defaut.items():
                         self.__dict__[k] = v
 
-                return {k: v for k, v in self.__dict__.items()}
+                return {**self.__dict__}
 
             else:
-                value = self.__dict__.setdefault(item, defaut)
+                return self.__dict__.setdefault(item, defaut)
 
-            return value
 
     return Clss(encode)

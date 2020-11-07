@@ -1,3 +1,6 @@
+# coding: utf-8
+# Python 3.6.2
+# ----------------------------------------------------------------------------
 
 from txtcr.core.types import *
 
@@ -35,37 +38,55 @@ def encode(data, *, profondeur=-1, indent=0):
         return "%s" % data
 
     elif isinstance(data, dict):
-        keys = [encode(key, profondeur=profondeur, indent=indent) for key in data.keys()]
-        values = [encode(value, profondeur=profondeur, indent=indent) for value in data.values()]
+        keys = [
+            encode(key, profondeur = profondeur, indent = indent)
+            for key in data.keys()
+        ]
+        values = [
+            encode(value, profondeur = profondeur, indent = indent)
+            for value in data.values()
+        ]
 
         _indent = config_indent(profondeur, indent)
         sep = _indent + ' '
 
-        return (_indent
-                + '{'
-                + sep.join([' '.join([k, v]) for k, v in zip(keys, values)])
-                + _indent
-                + "}")
+        return (
+            _indent
+            + '{'
+            + sep.join([' '.join([k, v]) for k, v in zip(keys, values)])
+            + _indent
+            + "}"
+        )
 
     elif isinstance(data, list):
         _indent = config_indent(profondeur, indent)
         sep = _indent + ' '
 
-        return (_indent
-                + '['
-                + sep.join([encode(value, profondeur=profondeur, indent=indent) for value in data])
-                + _indent
-                + ']')
+        return (
+            _indent
+            + '['
+            + sep.join([
+                encode(value, profondeur=profondeur, indent=indent) 
+                for value in data
+            ])
+            + _indent
+            + ']'
+        )
 
     elif isinstance(data, tuple):
         _indent = config_indent(profondeur, indent)
         sep = _indent + ' '
 
-        return (_indent
-                + '('
-                + sep.join([encode(value, profondeur=profondeur, indent=indent) for value in data])
-                + _indent
-                + ')')
+        return (
+            _indent
+            + '('
+            + sep.join([
+                encode(value, profondeur=profondeur, indent=indent) 
+                for value in data
+            ])
+            + _indent
+            + ')'
+        )
 
     elif data is None:
         return 'None'
@@ -93,7 +114,11 @@ def encode(data, *, profondeur=-1, indent=0):
         ]
 
         def encode_symlink(value):
-            return None if value is None else encode(value, profondeur=profondeur, indent=indent)
+            return (
+                None if value is None
+                else
+                    encode(value, profondeur=profondeur, indent=indent)
+            )
 
         valeurs = [
             encode_symlink(clss.__name__ or None),
@@ -103,21 +128,28 @@ def encode(data, *, profondeur=-1, indent=0):
             encode_symlink(getattr(data, 'cmdcode__', None)),
             encode_symlink(getattr(data, 'date__', None)),
             encode_symlink(getattr(data, 'hash__', None)),
-            encode_symlink({k: v for k, v in data.__dict__.items() if str(k)[-2:] != '__'} or None)
+            encode_symlink(
+                {
+                    k: v 
+                    for k, v in data.__dict__.items() if str(k)[-2:] != '__'
+                } or None
+            )
         ]
 
         _indent = config_indent(profondeur, indent)
         sep = _indent + ' '
 
-        return (_indent
-                + '<'
-                + sep.join(
-                    [balise + valeur
-                     for balise, valeur in zip(balises, valeurs)
-                     if valeur is not None]
-                )
-                + _indent
-                + '>')
+        return (
+            _indent
+            + '<'
+            + sep.join([
+                balise + valeur
+                for balise, valeur in zip(balises, valeurs)
+                if valeur is not None
+            ])
+            + _indent
+            + '>'
+        )
 
     else:
         raise TypeError('Type %s non compatible !' % type(data))
