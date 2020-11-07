@@ -3,93 +3,166 @@
 # ----------------------------------------------------------------------------
 
 from txtcr.core.types import *
+from txtcr.util._utile import balises
 
 
-def config_indent(profondeur, indent):
-    return ('\n' + ' ' * indent * profondeur
-            if indent else '')
+def encode(data, *, profondeur = -1, indent = 0):
 
-
-# Chars escaping
-def config_echappement(data):
-    return data.replace('\\', '\\\\').replace('\n', '\\n').replace('\t', '\\t')
-
-
-# Main encoding function
-def encode(data, *, profondeur=-1, indent=0):
     profondeur += 1
 
     # String
     if isinstance(data, str):
-        return '"%s"' % config_echappement(data).replace('"', '\\"')
+
+        str_simple = False
+
+        if data and data[0] not in '0123456789.':
+            str_simple = True
+
+            for carac in data:
+                if carac == ' ' or carac in balises:
+                    str_simple = False
+                    break
+
+        if str_simple:
+            value_encoded = data
+        else:
+            value_encoded = (
+                '"%s"'
+                % data
+                .replace('"', '\\"')
+                .replace('\\', '\\\\')
+                .replace('\n', '\\n')
+                .replace('\t', '\\t')
+            )
 
     # Bytes
     elif isinstance(data, bytes):
-        return "'%s'" % config_echappement(data.decode()).replace("'", "\\'")
+        value_encoded = (
+            "'%s'"
+            % data.decode()
+            .replace("'", "\\'")
+            .replace('\\', '\\\\')
+            .replace('\n', '\\n')
+            .replace('\t', '\\t')
+        )
 
     # Boolean
     elif isinstance(data, bool):
         if data:
-            return 'True'
+            value_encoded = 'True'
         else:
-            return 'False'
+            value_encoded = 'False'
 
     elif isinstance(data, (int, float)):
-        return "%s" % data
+        value_encoded = "%s" % data
 
     elif isinstance(data, dict):
-        keys = [
-            encode(key, profondeur = profondeur, indent = indent)
-            for key in data.keys()
-        ]
-        values = [
-            encode(value, profondeur = profondeur, indent = indent)
-            for value in data.values()
-        ]
 
-        _indent = config_indent(profondeur, indent)
-        sep = _indent + ' '
+        value_encoded = '{'
 
-        return (
-            _indent
-            + '{'
-            + sep.join([' '.join([k, v]) for k, v in zip(keys, values)])
-            + _indent
-            + "}"
+        espace = ''
+
+        espacement = (
+            '' if not indent
+            else
+                '\n' + ' ' * indent * (profondeur + 1)
         )
+
+        for key, value in data.items():
+
+            key = encode(
+                key,
+                profondeur = profondeur,
+                indent = indent
+            )
+
+            value = encode(
+                value,
+                profondeur = profondeur,
+                indent = indent
+            )
+
+            value_encoded += f"{espacement}{espace}{key} {value}"
+
+            if not indent:
+                espace = ' '
+
+        value_encoded += (
+            '' if not indent
+            else
+                '\n' + ' ' * indent * profondeur
+        )
+
+        value_encoded += '}'
 
     elif isinstance(data, list):
-        _indent = config_indent(profondeur, indent)
-        sep = _indent + ' '
 
-        return (
-            _indent
-            + '['
-            + sep.join([
-                encode(value, profondeur=profondeur, indent=indent) 
-                for value in data
-            ])
-            + _indent
-            + ']'
+        value_encoded = '['
+
+        espace = ''
+
+        espacement = (
+            '' if not indent
+            else
+                '\n' + ' ' * indent * (profondeur + 1)
         )
+
+        for value in data:
+
+            value = encode(
+                value, 
+                profondeur = profondeur,
+                indent = indent
+            )
+
+            value_encoded += f"{espacement}{espace}{value}"
+
+            if not indent:
+                espace = ' '
+
+        value_encoded += (
+            '' if not indent
+            else
+                '\n' + ' ' * indent * profondeur
+        )
+
+        value_encoded += ']'
 
     elif isinstance(data, tuple):
-        _indent = config_indent(profondeur, indent)
-        sep = _indent + ' '
 
-        return (
-            _indent
-            + '('
-            + sep.join([
-                encode(value, profondeur=profondeur, indent=indent) 
-                for value in data
-            ])
-            + _indent
-            + ')'
+        value_encoded = '('
+
+        espace = ''
+
+        espacement = (
+            '' if not indent
+            else
+                '\n' + ' ' * indent * (profondeur + 1)
         )
 
+        for value in data:
+
+            value = encode(
+                value, 
+                profondeur = profondeur,
+                indent = indent
+            )
+
+            value_encoded += f"{espacement}{espace}{value}"
+
+            if not indent:
+                espace = ' '
+
+        value_encoded += (
+            '' if not indent
+            else
+                '\n' + ' ' * indent * profondeur
+        )
+
+        value_encoded += ')'
+
     elif data is None:
-        return 'None'
+        value_encoded = 'None'
 
     elif is_class(data):
 
@@ -102,54 +175,67 @@ def encode(data, *, profondeur=-1, indent=0):
             clss = data
             clss_info = clss.__dict__
 
-        balises = [
-            'N#',
-            'D#',
-            'R#',
-            'S#',
-            'C#',
-            'T#',
-            'H#',
-            'I#'
-        ]
+        value_encoded = '<'
 
-        def encode_symlink(value):
-            return (
-                None if value is None
-                else
-                    encode(value, profondeur=profondeur, indent=indent)
-            )
+        espace = ''
 
-        valeurs = [
-            encode_symlink(clss.__name__ or None),
-            encode_symlink(clss.__doc__ or None),
-            encode_symlink(getattr(data, 'repr__', None)),
-            encode_symlink(getattr(data, 'str__', None)),
-            encode_symlink(getattr(data, 'cmdcode__', None)),
-            encode_symlink(getattr(data, 'date__', None)),
-            encode_symlink(getattr(data, 'hash__', None)),
-            encode_symlink(
-                {
-                    k: v 
-                    for k, v in data.__dict__.items() if str(k)[-2:] != '__'
-                } or None
-            )
-        ]
-
-        _indent = config_indent(profondeur, indent)
-        sep = _indent + ' '
-
-        return (
-            _indent
-            + '<'
-            + sep.join([
-                balise + valeur
-                for balise, valeur in zip(balises, valeurs)
-                if valeur is not None
-            ])
-            + _indent
-            + '>'
+        espacement = (
+            '' if not indent
+            else
+                '\n' + ' ' * indent * (profondeur + 1)
         )
+
+        for balise, value in zip(
+                [
+                    'N#',
+                    'D#',
+                    'R#',
+                    'S#',
+                    'C#',
+                    'T#',
+                    'H#',
+                    'I#'
+                ],
+                [
+                    clss.__name__ or None,
+                    clss.__doc__ or None,
+                    getattr(data, 'repr__', None),
+                    getattr(data, 'str__', None),
+                    getattr(data, 'cmdcode__', None),
+                    getattr(data, 'date__', None),
+                    getattr(data, 'hash__', None),
+                    {
+                        k: v 
+                        for k, v in data.__dict__.items() 
+                        if str(k)[-2:] != '__'
+                    } or None
+                ]
+            ):
+
+            if value is None:
+                continue
+
+            value = encode(
+                value, 
+                profondeur = profondeur,
+                indent = indent
+            )
+
+            value_encoded += f"{espacement}{espace}{balise}{value}"
+
+            if not indent:
+                espace = ' '
+
+        value_encoded += (
+            '' if not indent
+            else
+                '\n' + ' ' * indent * profondeur
+        )
+
+        value_encoded += '>'
 
     else:
         raise TypeError('Type %s non compatible !' % type(data))
+
+
+    return value_encoded
