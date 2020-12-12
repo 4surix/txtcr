@@ -26,12 +26,11 @@ def new_clss(encode):
         cmdcode__ = None
         date__ = None
         hash__ = None
-        encode__ = None
 
-        def __init__(self, encode_):
+        def __init__(self):
 
             Clss.__name__ = ''
-            Clss.encode__ = encode_
+            Clss.encode__ = encode
 
         def __len__(self):
 
@@ -123,9 +122,9 @@ def new_clss(encode):
 
             return self.__dict__.items()
 
-        def encode(self):
+        def encode(self, indent = 0):
 
-            return Clss.encode__(self)
+            return Clss.encode__(self, indent = indent)
 
         def get(self, item, defaut=None):
 
@@ -184,4 +183,4 @@ def new_clss(encode):
                 return self.__dict__.setdefault(item, defaut)
 
 
-    return Clss(encode)
+    return Clss()
