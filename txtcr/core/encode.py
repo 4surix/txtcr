@@ -87,11 +87,8 @@ def encode(data, *, profondeur = -1, indent = 0):
             if not indent:
                 espace = ' '
 
-        value_encoded += (
-            '' if not indent
-            else
-                '\n' + ' ' * indent * profondeur
-        )
+        if indent:
+            value_encoded += '\n' + ' ' * indent * profondeur
 
         value_encoded += '}'
 
@@ -120,11 +117,8 @@ def encode(data, *, profondeur = -1, indent = 0):
             if not indent:
                 espace = ' '
 
-        value_encoded += (
-            '' if not indent
-            else
-                '\n' + ' ' * indent * profondeur
-        )
+        if indent:
+            value_encoded += '\n' + ' ' * indent * profondeur
 
         value_encoded += ']'
 
@@ -153,11 +147,8 @@ def encode(data, *, profondeur = -1, indent = 0):
             if not indent:
                 espace = ' '
 
-        value_encoded += (
-            '' if not indent
-            else
-                '\n' + ' ' * indent * profondeur
-        )
+        if indent:
+            value_encoded += '\n' + ' ' * indent * profondeur
 
         value_encoded += ')'
 
@@ -226,11 +217,8 @@ def encode(data, *, profondeur = -1, indent = 0):
             if not indent:
                 espace = ' '
 
-        value_encoded += (
-            '' if not indent
-            else
-                '\n' + ' ' * indent * profondeur
-        )
+        if indent:
+            value_encoded += '\n' + ' ' * indent * profondeur
 
         value_encoded += '>'
 
