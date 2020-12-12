@@ -70,16 +70,7 @@ class Conteneur:
 
     def add(self, value):
 
-        if is_class(self.value) and 'repr__' in dir(self.value):
-
-            if self.key != '':
-                self.value[self.key] = value
-                self.key = ''
-
-            else:
-                self.key = value
-
-        elif isinstance(self.value, dict):
+        if isinstance(self.value, dict):
 
             if self.key != '':
                 self.value[self.key] = value
@@ -93,6 +84,15 @@ class Conteneur:
 
         elif isinstance(self.value, tuple):
             self.value += (value,)
+
+        elif is_class(self.value) and 'repr__' in dir(self.value):
+
+            if self.key != '':
+                self.value[self.key] = value
+                self.key = ''
+
+            else:
+                self.key = value
 
         # Mise à zéro des valeurs pour accueillir le prochain objet
         self.texte = ''
@@ -120,7 +120,7 @@ def decode(texte, *, exclues=[], ever_list=False):
                  sur un arbre"
                 }
 
-                ["pomme"] == "il était une pomme  sur un arbre"
+                ["pomme"] == "il était une pomme sur un arbre"
 
                 """
                 continue
@@ -132,44 +132,18 @@ def decode(texte, *, exclues=[], ever_list=False):
             
         if not conteneur.type:
 
+            if carac == ' ':
+                continue
+
             is_continue = True
 
             carac_suivant = (
                 '' if taille_texte == position + 1
                 else
                     texte[position + 1]
-            )
+            ) 
 
-            if carac == '/' and carac_suivant == '/':
-                """ Commantaire
-
-                {// Information //
-                 ID 123456
-                 // Autre //
-                 langage "fr"
-                 heure "UTC"
-                }
-
-                """
-                conteneur.type = '//'
-
-            elif carac == '<':
-                # <I#{}>
-                conteneur = Conteneur(conteneur, new_clss(encode))
-
-            elif carac == '{':
-                # {"pouet" 123456}
-                conteneur = Conteneur(conteneur, {})
-
-            elif carac == '[':
-                # ["pouf" "poire" 1234]
-                conteneur = Conteneur(conteneur, [])
-
-            elif carac == '(':
-                # (34.6 "wouf" 'pouet')
-                conteneur = Conteneur(conteneur, ())
-
-            elif carac == '"':
+            if carac == '"':
                 # "Pouet"
                 conteneur.type = carac
 
@@ -186,6 +160,22 @@ def decode(texte, *, exclues=[], ever_list=False):
                 conteneur.type = '+'
                 conteneur.texte += carac
 
+            elif carac == '{':
+                # {"pouet" 123456}
+                conteneur = Conteneur(conteneur, {})
+
+            elif carac == '[':
+                # ["pouf" "poire" 1234]
+                conteneur = Conteneur(conteneur, [])
+
+            elif carac == '(':
+                # (34.6 "wouf" 'pouet')
+                conteneur = Conteneur(conteneur, ())
+
+            elif carac == '<':
+                # <I#{}>
+                conteneur = Conteneur(conteneur, new_clss(encode))
+
             elif carac in balises_categories and carac_suivant == '#':
                 """
                 N#Pouet
@@ -194,9 +184,22 @@ def decode(texte, *, exclues=[], ever_list=False):
                 """
                 conteneur.type = carac
 
+            elif carac == '/' and carac_suivant == '/':
+                """ Commantaire
+
+                {// Information //
+                 ID 123456
+                 // Autre //
+                 langage "fr"
+                 heure "UTC"
+                }
+
+                """
+                conteneur.type = '//'
+
             elif carac not in [
                     '>', '}', ']', ')', # Balises fermante
-                    '#', ' ', ',', ':', '=' # Séparations
+                    '#', ',', ':', '=' # Séparations
                 ]:
                 conteneur.type = '##'
                 conteneur.texte += carac
@@ -225,8 +228,10 @@ def decode(texte, *, exclues=[], ever_list=False):
                 conteneur.type = ''
 
         # Conteneure
-        elif (conteneur.type not in ['"', "'"]
-            and carac in ['>', '}', ']', ')', '#']):
+        elif (
+            conteneur.type not in ['"', "'"]
+            and carac in ['>', '}', ']', ')', '#']
+        ):
 
             if conteneur.texte:
                 # (pomme), [pomme], {name Pouf}
@@ -242,10 +247,11 @@ def decode(texte, *, exclues=[], ever_list=False):
             conteneur = ancien_conteneur
 
         # Texte
-        elif (carac == conteneur.type 
-              and carac in ['"', "'"]
-              and not echappement
-            ):
+        elif (
+            carac == conteneur.type 
+            and carac in ['"', "'"]
+            and not echappement
+        ):
             conteneur.convert()
 
 
@@ -293,16 +299,16 @@ def decode(texte, *, exclues=[], ever_list=False):
 
         ### Fin texte sans balise ou ajout carac
 
-        elif (carac == ' '    # pouet "pomme"
-              or carac == ',' # pouet, "pomme"
-              or carac == ':' # pouet: "pomme"
-              or carac == '=' # pouet= "pomme"
-            ):
-            if conteneur.type == '##':
-                conteneur.convert()
-
         elif conteneur.type == '##':
-            conteneur.texte += carac
+            if (
+                carac == ' '    # pouet "pomme"
+                or carac == ',' # pouet, "pomme"
+                or carac == ':' # pouet: "pomme"
+                or carac == '=' # pouet= "pomme"
+            ):
+                conteneur.convert()
+            else:
+                conteneur.texte += carac
 
 
         if echappement:
