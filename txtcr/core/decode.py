@@ -41,15 +41,6 @@ class Conteneur:
         elif self.type in ['+', '-']:
             value = mk_nbr(self.type + texte)
 
-        elif self.type == '1"':
-            value = True
-
-        elif self.type == '0"':
-            value = False
-
-        elif self.type == 'O"':
-            value = None
-
         elif self.type == "'":
             value = texte.encode()
 
