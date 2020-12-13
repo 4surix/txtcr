@@ -17,6 +17,8 @@ class Conteneur:
 
         self.value = value
 
+        self.__config_add(value)
+
         # Les objets qui seront dans ce conteneur
         #  sont d'abors enregistrés en texte 
         #  puis transformés dans self.convert()
@@ -59,35 +61,38 @@ class Conteneur:
 
         self.add(value)
 
-    def add(self, value):
-
-        if isinstance(self.value, dict):
-
-            if self.key != '':
-                self.value[self.key] = value
-                self.key = ''
-
-            else:
-                self.key = value
-
-        elif isinstance(self.value, list):
-            self.value.append(value)
-
-        elif isinstance(self.value, tuple):
-            self.value += (value,)
-
-        elif is_class(self.value) and 'repr__' in dir(self.value):
-
-            if self.key != '':
-                self.value[self.key] = value
-                self.key = ''
-
-            else:
-                self.key = value
-
         # Mise à zéro des valeurs pour accueillir le prochain objet
         self.texte = ''
         self.type = ''
+
+    def __dict_add(self, value):
+
+        if self.key != '':
+            self.value[self.key] = value
+            self.key = ''
+
+        else:
+            self.key = value
+
+    def __list_add(self, value):
+        self.value.append(value)
+
+    def __tuple_add(self, value):
+        self.value += (value,)
+
+    def __config_add(self, value):
+
+        if isinstance(value, dict):
+            self.add = self.__dict_add
+
+        elif isinstance(value, list):
+            self.add = self.__list_add
+
+        elif isinstance(value, tuple):
+            self.add = self.__tuple_add
+
+        elif is_class(value) and 'repr__' in dir(value):
+            self.add = self.__dict_add
 
 
 def decode(texte, *, exclues=[], ever_list=False):
