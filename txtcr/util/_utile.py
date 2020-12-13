@@ -14,12 +14,16 @@ balises_fermentes = ['>', '}', ']', ')']
 
 balises_separations = ['#', '=', ',', ':']
 
+# Evite les problémes de syntaxe l'ors du passage à la version 3
+futur_balises_v3 = [':', '@'] 
+
 chiffres = list('0123456789')
 
 balises = (
     balises_ouvrantes
     + balises_fermentes
     + balises_separations
+    + futur_balises_v3
 )
 
 
