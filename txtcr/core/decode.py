@@ -26,10 +26,19 @@ class Conteneur:
 
         self.type = ''
 
-        # Si le conteneur actuel est un dictionnaire
-        #  sert à enregistrer d'abord la clé pour ensuite
-        #  l'utiliser quand il faudrat mettre la valeur
-        self.key = ''
+        # Sert à enregistrer la key ou l'index,
+        #  dans le cas de définir la position actuel,
+        #  et pour dans le cas d'un dictionnaire 
+        #  enregistrer d'abord la clé pour ensuite
+        #  l'utiliser quand il faudrat mettre la valeur.
+        self.key = 0 if isinstance(value, (list, tuple)) else ''
+
+        # Retrace tout les keys/indexs précédentes.
+        self.position = (
+            [] if not ancien_conteneur
+            else
+                ancien_conteneur.position + [ancien_conteneur.key]
+        )
 
     def convert(self):
 
@@ -76,9 +85,11 @@ class Conteneur:
 
     def __list_add(self, value):
         self.value.append(value)
+        self.key += 1
 
     def __tuple_add(self, value):
         self.value += (value,)
+        self.key += 1
 
     def __config_add(self, value):
 
@@ -207,9 +218,8 @@ def decode(texte, *, exclues=[], ever_list=False):
                 continue
 
 
-        ### Femeture
+        ### Commentaire
 
-        # Commentaire
         if conteneur.type == '//':
             # On remplace le type 
             #  indiquant qu'un commentaire vient d'être créé,
@@ -223,7 +233,9 @@ def decode(texte, *, exclues=[], ever_list=False):
             if '/' == carac == texte[position - 1]: # [...] blabla//
                 conteneur.type = ''
 
-        # Conteneure
+
+        ### Fermeture conteneure
+
         elif (
             conteneur.type not in ['"', "'"]
             and carac in ['>', '}', ']', ')', '#']
@@ -242,7 +254,9 @@ def decode(texte, *, exclues=[], ever_list=False):
             ancien_conteneur.add(conteneur.value)
             conteneur = ancien_conteneur
 
-        # Texte
+
+        ### Fermeture texte
+
         elif (
             carac == conteneur.type 
             and carac in ['"', "'"]

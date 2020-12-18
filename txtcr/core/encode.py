@@ -6,7 +6,7 @@ from txtcr.core.types import *
 from txtcr.util._utile import balises
 
 
-def encode(data, *, profondeur = -1, indent = 0):
+def encode(data, *, profondeur = -1, position = [0], indent = 0):
 
     profondeur += 1
 
@@ -15,7 +15,7 @@ def encode(data, *, profondeur = -1, indent = 0):
 
         str_simple = False
 
-        if data and data[0] not in '0123456789.':
+        if data and data[0] not in '0123456789':
             str_simple = True
 
             for carac in data:
@@ -68,17 +68,18 @@ def encode(data, *, profondeur = -1, indent = 0):
                 '\n' + ' ' * indent * (profondeur + 1)
         )
 
-        for key, value in data.items():
+        for key__, value__ in data.items():
 
             key = encode(
-                key,
+                key__,
                 profondeur = profondeur,
                 indent = indent
             )
 
             value = encode(
-                value,
+                value__,
                 profondeur = profondeur,
+                position = position + [key__],
                 indent = indent
             )
 
@@ -104,11 +105,12 @@ def encode(data, *, profondeur = -1, indent = 0):
                 '\n' + ' ' * indent * (profondeur + 1)
         )
 
-        for value in data:
+        for index, value in enumerate(data):
 
             value = encode(
-                value, 
+                value,
                 profondeur = profondeur,
+                position = position + [index],
                 indent = indent
             )
 
@@ -134,11 +136,12 @@ def encode(data, *, profondeur = -1, indent = 0):
                 '\n' + ' ' * indent * (profondeur + 1)
         )
 
-        for value in data:
+        for index, value in enumerate(data):
 
             value = encode(
                 value, 
                 profondeur = profondeur,
+                position = position + [index],
                 indent = indent
             )
 
@@ -209,6 +212,7 @@ def encode(data, *, profondeur = -1, indent = 0):
             value = encode(
                 value, 
                 profondeur = profondeur,
+                position = position + [balise],
                 indent = indent
             )
 
@@ -223,7 +227,14 @@ def encode(data, *, profondeur = -1, indent = 0):
         value_encoded += '>'
 
     else:
-        raise TypeError('Type %s non compatible !' % type(data))
+        raise TypeError(
+            'Type %s non compatible !' % type(data)
+            + '\nTraceback (index/key):'
+            + '\n' + '\n'.join(
+                ('    ' * i) + str(value)
+                for i, value in enumerate(position)
+            )
+        )
 
 
     return value_encoded
