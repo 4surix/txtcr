@@ -106,6 +106,21 @@ class Conteneur:
             self.add = self.__dict_add
 
 
+def raise_bad_char_close(carac, conteneur):
+
+    raise ValueError(
+        'Mauvais carac fermeture " %s " pour type " %s "' % (
+            carac,
+            conteneur.value.__class__.__name__
+        )
+        + '\nTraceback (index/key):'
+        + '\n' + '\n'.join(
+            ('    ' * i) + str(value)
+            for i, value in enumerate(conteneur.position)
+        )
+    )
+
+
 def decode(texte, *, exclues=[], ever_list=False):
 
     echappement = False
@@ -285,6 +300,8 @@ def decode(texte, *, exclues=[], ever_list=False):
         ### Fermeture conteneur
 
         elif carac == ')':
+            if conteneur.value.__class__ != tuple:
+                raise_bad_char_close(carac, conteneur)
 
             if conteneur.texte: conteneur.convert()
 
@@ -292,6 +309,8 @@ def decode(texte, *, exclues=[], ever_list=False):
             conteneur = conteneur.ancien_conteneur
 
         elif carac == ']':
+            if conteneur.value.__class__ != list:
+                raise_bad_char_close(carac, conteneur)
 
             if conteneur.texte: conteneur.convert()
 
@@ -299,6 +318,8 @@ def decode(texte, *, exclues=[], ever_list=False):
             conteneur = conteneur.ancien_conteneur
 
         elif carac == '}':
+            if conteneur.value.__class__ != dict:
+                raise_bad_char_close(carac, conteneur)
 
             if conteneur.texte: conteneur.convert()
 
@@ -306,6 +327,8 @@ def decode(texte, *, exclues=[], ever_list=False):
             conteneur = conteneur.ancien_conteneur
 
         elif carac == '>':
+            if not getattr(conteneur.value.__class__, 'encode__', None):
+                raise_bad_char_close(carac, conteneur)
 
             if conteneur.texte: conteneur.convert()
 
@@ -313,6 +336,8 @@ def decode(texte, *, exclues=[], ever_list=False):
             conteneur = conteneur.ancien_conteneur
 
         elif carac == '#':
+            if conteneur.type not in balises_categories:
+                raise_bad_char_close(carac, conteneur)
 
             conteneur.convert()
 
