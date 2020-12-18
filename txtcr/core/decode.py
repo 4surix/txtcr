@@ -218,49 +218,14 @@ def decode(texte, *, exclues=[], ever_list=False):
                 continue
 
 
-        ### Commentaire
+        ### Texte
 
-        if conteneur.type == '//':
-            # On remplace le type 
-            #  indiquant qu'un commentaire vient d'être créé,
-            #  par le type indiquant qu'on est à l'intérieure d'un commentaire
-            conteneur.type = '/'
-
-        elif conteneur.type == '/':
-            # On rentre forcément dans la condition si c'est un commentaire 
-            #  car tout est ignoré dedans
-
-            if '/' == carac == texte[position - 1]: # [...] blabla//
-                conteneur.type = ''
-
-
-        ### Fermeture conteneure
-
-        elif (
-            conteneur.type not in ['"', "'"]
-            and carac in ['>', '}', ']', ')', '#']
-        ):
-
-            if conteneur.texte:
-                # (pomme), [pomme], {name Pouf}
-                conteneur.convert()
-
-            elif conteneur.type in balises_categories:
-                # <I#{}>
-                conteneur.convert()
-                continue
-
-            ancien_conteneur = conteneur.ancien_conteneur
-            ancien_conteneur.add(conteneur.value)
-            conteneur = ancien_conteneur
-
-
-        ### Fermeture texte
-
-        elif (
-            carac == conteneur.type 
-            and carac in ['"', "'"]
-            and not echappement
+        if (
+            not echappement
+            and (
+                carac == conteneur.type == '"'
+                or carac == conteneur.type == "'"
+            )
         ):
             conteneur.convert()
 
@@ -278,6 +243,7 @@ def decode(texte, *, exclues=[], ever_list=False):
                 # "Pomme \ poire"
                 echappement = True
 
+            # Evite que l'échappement revient à False tout en bas
             continue
 
         elif echappement:
@@ -293,18 +259,62 @@ def decode(texte, *, exclues=[], ever_list=False):
 
         ### Ajout de caractére
 
-        elif conteneur.type in ['"', "'"]:
+        elif (
+            conteneur.type == '"'
+            or conteneur.type == "'"
+        ):
             # "Pomme"
             # 'Pomme'
             conteneur.texte += carac
 
-        elif conteneur.type in ['+', '-']:
+
+        ### Chiffres
+
+        elif (
+            conteneur.type == '+'
+            or conteneur.type == '-'
+        ):
             # +123
             # -123
             if carac not in '0123456789.':
                 conteneur.convert()
             else:
                 conteneur.texte += carac
+
+
+        ### Fermeture conteneur
+
+        elif carac == ')':
+
+            if conteneur.texte: conteneur.convert()
+
+            conteneur.ancien_conteneur.add(conteneur.value)
+            conteneur = conteneur.ancien_conteneur
+
+        elif carac == ']':
+
+            if conteneur.texte: conteneur.convert()
+
+            conteneur.ancien_conteneur.add(conteneur.value)
+            conteneur = conteneur.ancien_conteneur
+
+        elif carac == '}':
+
+            if conteneur.texte: conteneur.convert()
+
+            conteneur.ancien_conteneur.add(conteneur.value)
+            conteneur = conteneur.ancien_conteneur
+
+        elif carac == '>':
+
+            if conteneur.texte: conteneur.convert()
+
+            conteneur.ancien_conteneur.add(conteneur.value)
+            conteneur = conteneur.ancien_conteneur
+
+        elif carac == '#':
+
+            conteneur.convert()
 
 
         ### Fin texte sans balise ou ajout carac
