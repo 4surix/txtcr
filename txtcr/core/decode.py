@@ -9,15 +9,22 @@ from txtcr.core.types import *
 from txtcr.core.encode import encode
 
 
+class ConteneurBase:
+    value = None
+    key = 0
+    keys_generals = []
+    position = []
+
+
 class Conteneur:
 
-    def __init__(self, ancien_conteneur, value):
+    def __init__(self, conteneur_parent, value):
 
-        self.ancien_conteneur = ancien_conteneur
+        self.conteneur_parent = conteneur_parent
 
         self.value = value
 
-        self.__config_add(value)
+        self.__config_add()
 
         # Les objets qui seront dans ce conteneur
         #  sont d'abors enregistrés en texte 
@@ -33,12 +40,37 @@ class Conteneur:
         #  l'utiliser quand il faudrat mettre la valeur.
         self.key = 0 if isinstance(value, (list, tuple)) else ''
 
+        if (
+            # [
+            #    :key
+            #    { <--
+            #        []
+            #    }
+            # ]
+            conteneur_parent.value.__class__ == dict
+            # [ <--
+            #    :key
+            #    {
+            #        []
+            #    }
+            # ]
+            and conteneur_parent.conteneur_parent.keys_generals
+        ):
+            index = (
+                conteneur_parent.conteneur_parent.keys_generals[
+                    len(conteneur_parent.value)
+                ]
+            )
+
+        else:
+            index = conteneur_parent.key
+
         # Retrace tout les keys/indexs précédentes.
-        self.position = (
-            [] if not ancien_conteneur
-            else
-                ancien_conteneur.position + [ancien_conteneur.key]
-        )
+        self.position = conteneur_parent.position + [index]
+
+        self.index_KG = 0
+        self.keys_generals = []
+        self.is_key_general = False
 
     def convert(self):
 
@@ -68,13 +100,24 @@ class Conteneur:
             elif value == 'None':
                 value = None
 
-        self.add(value)
+
+        if self.is_key_general:
+            self.is_key_general = False
+            self.keys_generals.append(value)
+            self.index_KG += 1
+
+        else:
+            self.add(value)
+
 
         # Mise à zéro des valeurs pour accueillir le prochain objet
         self.texte = ''
         self.type = ''
 
     def __dict_add(self, value):
+
+        if self.conteneur_parent.keys_generals:
+            self.key = self.conteneur_parent.keys_generals[len(self.value)]
 
         if self.key != '':
             self.value[self.key] = value
@@ -91,18 +134,18 @@ class Conteneur:
         self.value += (value,)
         self.key += 1
 
-    def __config_add(self, value):
+    def __config_add(self):
 
-        if isinstance(value, dict):
+        if isinstance(self.value, dict):
             self.add = self.__dict_add
 
-        elif isinstance(value, list):
+        elif isinstance(self.value, list):
             self.add = self.__list_add
 
-        elif isinstance(value, tuple):
+        elif isinstance(self.value, tuple):
             self.add = self.__tuple_add
 
-        elif is_class(value) and 'repr__' in dir(value):
+        elif is_class(self.value) and 'repr__' in dir(value):
             self.add = self.__dict_add
 
 
@@ -124,7 +167,8 @@ def raise_bad_char_close(carac, conteneur):
 def decode(texte, *, exclues=[], ever_list=False):
 
     echappement = False
-    conteneur = Conteneur(None, [])
+    conteneur = Conteneur(ConteneurBase, [])
+    conteneur.position.pop(0)
 
     taille_texte = len(texte)
 
@@ -219,6 +263,20 @@ def decode(texte, *, exclues=[], ever_list=False):
                 """
                 conteneur.type = '//'
 
+            elif carac == ':':
+                """
+                [
+                    : pomme
+                    : poire
+
+                    {
+                        "rouge"
+                        "verte"
+                    }
+                ]
+                """
+                conteneur.is_key_general = True
+
             elif carac not in [
                     '>', '}', ']', ')', # Balises fermante
                     '#', ',', ':', '=' # Séparations
@@ -305,8 +363,8 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             if conteneur.texte: conteneur.convert()
 
-            conteneur.ancien_conteneur.add(conteneur.value)
-            conteneur = conteneur.ancien_conteneur
+            conteneur.conteneur_parent.add(conteneur.value)
+            conteneur = conteneur.conteneur_parent
 
         elif carac == ']':
             if conteneur.value.__class__ != list:
@@ -314,8 +372,8 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             if conteneur.texte: conteneur.convert()
 
-            conteneur.ancien_conteneur.add(conteneur.value)
-            conteneur = conteneur.ancien_conteneur
+            conteneur.conteneur_parent.add(conteneur.value)
+            conteneur = conteneur.conteneur_parent
 
         elif carac == '}':
             if conteneur.value.__class__ != dict:
@@ -323,8 +381,8 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             if conteneur.texte: conteneur.convert()
 
-            conteneur.ancien_conteneur.add(conteneur.value)
-            conteneur = conteneur.ancien_conteneur
+            conteneur.conteneur_parent.add(conteneur.value)
+            conteneur = conteneur.conteneur_parent
 
         elif carac == '>':
             if not getattr(conteneur.value.__class__, 'encode__', None):
@@ -332,8 +390,8 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             if conteneur.texte: conteneur.convert()
 
-            conteneur.ancien_conteneur.add(conteneur.value)
-            conteneur = conteneur.ancien_conteneur
+            conteneur.conteneur_parent.add(conteneur.value)
+            conteneur = conteneur.conteneur_parent
 
         elif carac == '#':
             if conteneur.type not in balises_categories:

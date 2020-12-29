@@ -6,18 +6,37 @@ from txtcr.core.types import *
 from txtcr.util._utile import balises
 
 
-def encode(data, *, profondeur = -1, position = [0], indent = 0):
+def check_all_values_is_dict_with_same_keys(data):
+
+    if not data:
+        return
+
+    if data[0].__class__ != dict:
+        return
+
+    keys = data[0].keys()
+
+    for element in data:
+        if element.__class__ != dict or element.keys() != keys:
+            return
+
+    return sorted(keys)
+
+
+def encode(
+        data, 
+        *, 
+        profondeur = -1, position = [0], indent = 0, raccourcis_keys = []
+    ):
 
     profondeur += 1
 
     # String
     if isinstance(data, str):
 
-        str_simple = False
+        str_simple = data and data[0] not in '0123456789'
 
-        if data and data[0] not in '0123456789':
-            str_simple = True
-
+        if str_simple:
             for carac in data:
                 if carac == ' ' or carac in balises:
                     str_simple = False
@@ -68,22 +87,68 @@ def encode(data, *, profondeur = -1, position = [0], indent = 0):
                 '\n' + ' ' * indent * (profondeur + 1)
         )
 
+        milieu = ' ' if not raccourcis_keys else ''
+
+        index_KG = 0
+
+        raccourcis_keys__ = []
+
+        keys = check_all_values_is_dict_with_same_keys(list(data.values()))
+
+        if keys:
+
+            for key__ in keys:
+
+                raccourcis_keys__.append(key__)
+
+                ### Encode key
+                #
+
+                key = encode(
+                    key__,
+                    profondeur = profondeur,
+                    position = position + ['__#KG%s#__' % index_KG],
+                    indent = indent
+                )
+
+                value_encoded += f"{espacement}{espace}:{key}"
+
+                if not indent:
+                    espace = ' '
+
+                index_KG += 1
+
+
+        index = 0
+
         for key__, value__ in data.items():
 
-            key = encode(
-                key__,
-                profondeur = profondeur,
-                indent = indent
+            key = (
+                '' if raccourcis_keys
+                else
+                    encode(
+                        key__,
+                        profondeur = profondeur,
+                        position = position,
+                        indent = indent
+                    )
             )
 
             value = encode(
                 value__,
+                raccourcis_keys = raccourcis_keys__,
                 profondeur = profondeur,
-                position = position + [key__],
+                position = position + [
+                    key__ if not raccourcis_keys
+                    else
+                        raccourcis_keys[index]
+                ],
                 indent = indent
             )
 
-            value_encoded += f"{espacement}{espace}{key} {value}"
+            index += 1
+
+            value_encoded += f"{espacement}{espace}{key}{milieu}{value}"
 
             if not indent:
                 espace = ' '
@@ -105,10 +170,44 @@ def encode(data, *, profondeur = -1, position = [0], indent = 0):
                 '\n' + ' ' * indent * (profondeur + 1)
         )
 
+        ### Keys globals
+        #
+
+        index_KG = 0
+
+        raccourcis_keys__ = []
+
+        keys = check_all_values_is_dict_with_same_keys(data)
+
+        if keys:
+
+            for key__ in keys:
+
+                raccourcis_keys__.append(key__)
+
+                ### Encode key
+                #
+
+                key = encode(
+                    key__,
+                    profondeur = profondeur,
+                    position = position + ['__#KG%s#__' % index_KG],
+                    indent = indent
+                )
+
+                value_encoded += f"{espacement}{espace}:{key}"
+
+                if not indent:
+                    espace = ' '
+
+                index_KG += 1
+
+
         for index, value in enumerate(data):
 
             value = encode(
                 value,
+                raccourcis_keys = raccourcis_keys__,
                 profondeur = profondeur,
                 position = position + [index],
                 indent = indent
@@ -136,10 +235,44 @@ def encode(data, *, profondeur = -1, position = [0], indent = 0):
                 '\n' + ' ' * indent * (profondeur + 1)
         )
 
+        ### Keys globals
+        #
+
+        index_KG = 0
+
+        raccourcis_keys__ = []
+
+        keys = check_all_values_is_dict_with_same_keys(data)
+
+        if keys:
+
+            for key__ in keys:
+
+                raccourcis_keys__.append(key__)
+
+                ### Encode key
+                #
+
+                key = encode(
+                    key__,
+                    profondeur = profondeur,
+                    position = position + ['__#KG%s#__' % index_KG],
+                    indent = indent
+                )
+
+                value_encoded += f"{espacement}{espace}:{key}"
+
+                if not indent:
+                    espace = ' '
+
+                index_KG += 1
+
+
         for index, value in enumerate(data):
 
             value = encode(
-                value, 
+                value,
+                raccourcis_keys = raccourcis_keys__,
                 profondeur = profondeur,
                 position = position + [index],
                 indent = indent
