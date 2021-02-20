@@ -145,7 +145,7 @@ class Conteneur:
         elif isinstance(self.value, tuple):
             self.add = self.__tuple_add
 
-        elif is_class(self.value) and 'repr__' in dir(value):
+        elif is_class(self.value) and 'repr__' in dir(self.value):
             self.add = self.__dict_add
 
 
