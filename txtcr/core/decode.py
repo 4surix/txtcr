@@ -299,20 +299,6 @@ def decode(texte, *, exclues=[], ever_list=False):
             conteneur.texte += carac
 
 
-        ### Chiffres
-
-        elif (
-            conteneur.type == '+'
-            or conteneur.type == '-'
-        ):
-            # +123
-            # -123
-            if carac not in '0123456789.':
-                conteneur.convert()
-            else:
-                conteneur.texte += carac
-
-
         ### Fermeture conteneur
 
         elif carac == ')' or carac == ']' or carac == '}' or carac == '>':
@@ -340,6 +326,20 @@ def decode(texte, *, exclues=[], ever_list=False):
                 raise_bad_char_close(carac, conteneur)
 
             conteneur.convert()
+
+
+        ### Chiffres
+
+        elif (
+            conteneur.type == '+'
+            or conteneur.type == '-'
+        ):
+            # +123
+            # -123
+            if carac not in '0123456789.':
+                conteneur.convert()
+            else:
+                conteneur.texte += carac
 
 
         ### Fin texte sans balise ou ajout carac
