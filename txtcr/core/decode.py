@@ -2,6 +2,7 @@
 # Python 3.6.2
 # ----------------------------------------------------------------------------
 
+from hashlib import md5
 from functools import partial
 
 
@@ -10,10 +11,13 @@ from txtcr.core.encode import encode
 
 
 class ConteneurBase:
-    value = None
-    key = 0
-    keys_generals = []
-    position = []
+
+    def __init__(self, hashs:dict):
+        self.value = None
+        self.key = 0
+        self.keys_generals = []
+        self.position = []
+        self.hashs = hashs
 
 
 class Conteneur:
@@ -56,7 +60,7 @@ class Conteneur:
             # ]
             and conteneur_parent.conteneur_parent.keys_generals
         ):
-            index = (
+            locked, index = (
                 conteneur_parent.conteneur_parent.keys_generals[
                     len(conteneur_parent.value)
                 ]
@@ -68,9 +72,13 @@ class Conteneur:
         # Retrace tout les keys/indexs précédentes.
         self.position = conteneur_parent.position + [index]
 
+        self.hashs = conteneur_parent.hashs
+
         self.index_KG = 0
         self.keys_generals = []
         self.is_key_general = False
+
+        self.locked = self.KG_locked = False
 
     def convert(self):
 
@@ -100,10 +108,12 @@ class Conteneur:
             elif value == 'None':
                 value = None
 
+        if self.locked:
+            self.verif_hash(value)
 
         if self.is_key_general:
             self.is_key_general = False
-            self.keys_generals.append(value)
+            self.keys_generals.append((self.KG_locked, value))
             self.index_KG += 1
 
         else:
@@ -114,10 +124,15 @@ class Conteneur:
         self.texte = ''
         self.type = ''
 
+        self.KG_locked = False
+
     def __dict_add(self, value):
 
         if self.conteneur_parent.keys_generals:
-            self.key = self.conteneur_parent.keys_generals[len(self.value)]
+            KG_locked, self.key = \
+                self.conteneur_parent.keys_generals[len(self.value)]
+            if KG_locked:
+                self.verif_hash(value)
 
         if self.key != '':
             self.value[self.key] = value
@@ -148,6 +163,24 @@ class Conteneur:
         elif is_class(self.value) and 'repr__' in dir(self.value):
             self.add = self.__dict_add
 
+    def verif_hash(self, value):
+
+        objet_hash = md5(
+            encode(value, verif_hash=True).encode('utf-8')
+        ).hexdigest()
+
+        position = tuple(
+            self.position + [self.key]
+        )
+
+        if position not in self.hashs:
+            self.hashs[position] = objet_hash
+
+        elif objet_hash != self.hashs[position]:
+            raise ValueError(
+                f'[L~{self.ligne}] Cette valeur bloquée à été modifiée !'
+            )
+
 
 def raise_bad_char_close(carac, conteneur):
 
@@ -164,19 +197,24 @@ def raise_bad_char_close(carac, conteneur):
     )
 
 
-def decode(texte, *, exclues=[], ever_list=False):
+def decode(texte, *, exclues=[], ever_list=False, hashs=None):
 
     echappement = False
-    conteneur = Conteneur(ConteneurBase, [])
+    conteneur = Conteneur(ConteneurBase(hashs), [])
     conteneur.position.pop(0)
 
     taille_texte = len(texte)
+
+    ligne = 1
 
     for position, carac in enumerate(texte):
 
         ### Carac spécial
 
         if carac == '\n' or carac == '\t':
+
+            if carac == '\n':
+                ligne += 1
 
             if conteneur.type == '"' or conteneur.type == "'":
                 """
@@ -263,6 +301,15 @@ def decode(texte, *, exclues=[], ever_list=False):
                 """
                 conteneur.type = '//'
 
+            elif carac == '@':
+                """
+                [
+                    @ pomme
+                    poire
+                ]
+                """
+                conteneur.locked = True
+
             elif carac == ':':
                 """
                 [
@@ -276,6 +323,11 @@ def decode(texte, *, exclues=[], ever_list=False):
                 ]
                 """
                 conteneur.is_key_general = True
+
+                if conteneur.locked:
+                    # @: pomme
+                    conteneur.KG_locked = True
+                    conteneur.locked = False
 
             elif carac not in [
                     '>', '}', ']', ')', # Balises fermante
@@ -291,9 +343,24 @@ def decode(texte, *, exclues=[], ever_list=False):
                 continue
 
 
+        ### Commentaire
+
+        if conteneur.type == '//':
+            # On remplace le type 
+            #  indiquant qu'un commentaire vient d'être créé,
+            #  par le type indiquant qu'on est à l'intérieure d'un commentaire
+            conteneur.type = '/'
+
+        elif conteneur.type == '/':
+            # On rentre forcément dans la condition si c'est un commentaire 
+            #  car tout est ignoré dedans
+
+            if '/' == carac == texte[position - 1]: # [...] blabla//
+                conteneur.type = ''
+
         ### Texte
 
-        if (
+        elif (
             not echappement
             and (
                 carac == conteneur.type == '"'
@@ -341,52 +408,22 @@ def decode(texte, *, exclues=[], ever_list=False):
             conteneur.texte += carac
 
 
-        ### Chiffres
-
-        elif (
-            conteneur.type == '+'
-            or conteneur.type == '-'
-        ):
-            # +123
-            # -123
-            if carac not in '0123456789.':
-                conteneur.convert()
-            else:
-                conteneur.texte += carac
-
-
         ### Fermeture conteneur
 
-        elif carac == ')':
-            if conteneur.value.__class__ != tuple:
-                raise_bad_char_close(carac, conteneur)
+        elif carac == ')' or carac == ']' or carac == '}' or carac == '>':
 
-            if conteneur.texte: conteneur.convert()
-
-            conteneur.conteneur_parent.add(conteneur.value)
-            conteneur = conteneur.conteneur_parent
-
-        elif carac == ']':
-            if conteneur.value.__class__ != list:
-                raise_bad_char_close(carac, conteneur)
-
-            if conteneur.texte: conteneur.convert()
-
-            conteneur.conteneur_parent.add(conteneur.value)
-            conteneur = conteneur.conteneur_parent
-
-        elif carac == '}':
-            if conteneur.value.__class__ != dict:
-                raise_bad_char_close(carac, conteneur)
-
-            if conteneur.texte: conteneur.convert()
-
-            conteneur.conteneur_parent.add(conteneur.value)
-            conteneur = conteneur.conteneur_parent
-
-        elif carac == '>':
-            if not getattr(conteneur.value.__class__, 'encode__', None):
-                raise_bad_char_close(carac, conteneur)
+            if carac == ')':
+                if conteneur.value.__class__ != tuple:
+                    raise_bad_char_close(carac, conteneur)
+            elif carac == ']':
+                if conteneur.value.__class__ != list:
+                    raise_bad_char_close(carac, conteneur)
+            elif carac == '}':
+                if conteneur.value.__class__ != dict:
+                    raise_bad_char_close(carac, conteneur)
+            elif carac == '>':
+                if not getattr(conteneur.value.__class__, 'encode__', None):
+                    raise_bad_char_close(carac, conteneur)
 
             if conteneur.texte: conteneur.convert()
 
@@ -399,6 +436,18 @@ def decode(texte, *, exclues=[], ever_list=False):
 
             conteneur.convert()
 
+        ### Chiffres
+
+        elif (
+            conteneur.type == '+'
+            or conteneur.type == '-'
+        ):
+            # +123
+            # -123
+            if carac not in '0123456789.':
+                conteneur.convert()
+            else:
+                conteneur.texte += carac
 
         ### Fin texte sans balise ou ajout carac
 

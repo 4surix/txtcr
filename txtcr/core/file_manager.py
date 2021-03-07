@@ -29,13 +29,15 @@ class FileManager:
         f.write(data)
     """
 
-    def __init__(self, chemin, mode='r', *, indent=0, default=None):
+    def __init__(self, chemin, mode='r', *, indent=0, default=None, hashs={}):
 
         self.chemin = chemin
         self.mode = mode
 
         self.indent = indent
         self.default = default
+
+        self.hashs = hashs
 
     def __enter__(self):
 
@@ -49,10 +51,7 @@ class FileManager:
 
     def __open(self):
 
-        try:
-            fichier = open(self.chemin, 'r', encoding='utf-8')
-            data = decode(fichier.read())
-
+        try: fichier = open(self.chemin, 'r', encoding='utf-8')
         except FileNotFoundError as exception:
             # Dans le cas où le fichier n'existerai pas,
             #   si une valeur par défaut a été definie
@@ -61,10 +60,14 @@ class FileManager:
 
             if self.default:
                 fichier = open(self.chemin, 'w', encoding='utf-8')
-                data = decode(self.default)
+                fichier.write(self.default)
+                data = decode(self.default, hashs=self.hashs)
 
             else:
                 raise exception
+
+        else:
+            data = decode(fichier.read(), hashs=self.hashs)
 
         fichier.close()
 
@@ -73,7 +76,7 @@ class FileManager:
     def __save(self, data):
 
         # Encode avant pour voir si tout est bon avant d'ouvrir le fichier.
-        data = encode(data, indent=self.indent)
+        data = encode(data, indent=self.indent, hashs=self.hashs)
         # Enregistrement
         fichier = open(self.chemin, 'w', encoding='utf-8')
         fichier.write(data)
