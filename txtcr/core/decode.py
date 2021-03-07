@@ -233,9 +233,25 @@ def decode(texte, *, exclues=[], ever_list=False):
                 continue
 
 
+        ### Commentaire
+
+        if conteneur.type == '//':
+            # On remplace le type 
+            #  indiquant qu'un commentaire vient d'être créé,
+            #  par le type indiquant qu'on est à l'intérieure d'un commentaire
+            conteneur.type = '/'
+
+        elif conteneur.type == '/':
+            # On rentre forcément dans la condition si c'est un commentaire 
+            #  car tout est ignoré dedans
+
+            if '/' == carac == texte[position - 1]: # [...] blabla//
+                conteneur.type = ''
+
+
         ### Texte
 
-        if (
+        elif (
             not echappement
             and (
                 carac == conteneur.type == '"'
