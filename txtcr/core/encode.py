@@ -13,13 +13,17 @@ def encode(data, *, profondeur = -1, position = [0], indent = 0):
     # String
     if isinstance(data, str):
 
-        str_simple = False
+        str_simple = data and data[0] not in '0123456789'
 
-        if data and data[0] not in '0123456789':
-            str_simple = True
-
+        if str_simple:
             for carac in data:
-                if carac == ' ' or carac in balises:
+                if (
+                    carac == ' '
+                    or carac == '\n'
+                    or carac == '\t'
+                    or carac == '\\'
+                    or carac in balises
+                ):
                     str_simple = False
                     break
 
