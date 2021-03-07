@@ -299,36 +299,20 @@ def decode(texte, *, exclues=[], ever_list=False):
 
         ### Fermeture conteneur
 
-        elif carac == ')':
-            if conteneur.value.__class__ != tuple:
-                raise_bad_char_close(carac, conteneur)
+        elif carac == ')' or carac == ']' or carac == '}' or carac == '>':
 
-            if conteneur.texte: conteneur.convert()
-
-            conteneur.ancien_conteneur.add(conteneur.value)
-            conteneur = conteneur.ancien_conteneur
-
-        elif carac == ']':
-            if conteneur.value.__class__ != list:
-                raise_bad_char_close(carac, conteneur)
-
-            if conteneur.texte: conteneur.convert()
-
-            conteneur.ancien_conteneur.add(conteneur.value)
-            conteneur = conteneur.ancien_conteneur
-
-        elif carac == '}':
-            if conteneur.value.__class__ != dict:
-                raise_bad_char_close(carac, conteneur)
-
-            if conteneur.texte: conteneur.convert()
-
-            conteneur.ancien_conteneur.add(conteneur.value)
-            conteneur = conteneur.ancien_conteneur
-
-        elif carac == '>':
-            if not getattr(conteneur.value.__class__, 'encode__', None):
-                raise_bad_char_close(carac, conteneur)
+            if carac == ')':
+                if conteneur.value.__class__ != tuple:
+                    raise_bad_char_close(carac, conteneur)
+            elif carac == ']':
+                if conteneur.value.__class__ != list:
+                    raise_bad_char_close(carac, conteneur)
+            elif carac == '}':
+                if conteneur.value.__class__ != dict:
+                    raise_bad_char_close(carac, conteneur)
+            elif carac == '>':
+                if not getattr(conteneur.value.__class__, 'encode__', None):
+                    raise_bad_char_close(carac, conteneur)
 
             if conteneur.texte: conteneur.convert()
 
