@@ -29,8 +29,8 @@ def encode(data, *, profondeur = -1, position = [0], indent = 0):
             value_encoded = (
                 '"%s"'
                 % data
-                .replace('"', '\\"')
                 .replace('\\', '\\\\')
+                .replace('"', '\\"')
                 .replace('\n', '\\n')
                 .replace('\t', '\\t')
             )
@@ -40,8 +40,8 @@ def encode(data, *, profondeur = -1, position = [0], indent = 0):
         value_encoded = (
             "'%s'"
             % data.decode()
-            .replace("'", "\\'")
             .replace('\\', '\\\\')
+            .replace("'", "\\'")
             .replace('\n', '\\n')
             .replace('\t', '\\t')
         )
